@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "io.github.yunching0513.oldmapstroll",
       "sha256_cert_fingerprints": [
-        "9A:42:F6:03:3B:8F:89:A3:C1:92:E7:2B:4C:67:A5:04:93:7A:65:B4:C4:70:B2:E8:70:D6:38:E4:2E:1B:0C:0F"
+        "9A:42:F6:03:3B:8F:89:A3:C1:92:E7:2B:4C:67:A5:04:93:7A:65:B4:C4:70:B2:E8:70:D6:38:E4:2E:1B:0C:0F",
+        "E2:EB:71:B3:61:4A:BE:57:32:9C:71:20:80:56:09:CD:7B:F8:AE:14:DD:72:F3:43:7A:03:D1:B8:75:14:BD:17"
       ]
     }
   }
