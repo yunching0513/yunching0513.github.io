@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wu Yun-Ching — Designer · Researcher · Sustainability Advocate</title>
+<meta name="description" content="Wu Yun-Ching (吳昀慶) — designer, researcher, and sustainability advocate working at the intersection of urban mobility, citizen participation, and human-centered AI.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@400;500;600&family=Cormorant:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F2F2F2;
+    --panel:#FFFFFF;
+    --panel-soft:#ECECEA;
+    --ink:#333333;
+    --ink-strong:#000000;
+    --ink-faint:#9a9a9a;
+    --line:#dcdcdc;
+    --tint:#D6DCE0;
+    --tint-2:#E4E1DA;
+    --accent:#A6392C;        /* 朱 vermilion — seal / 落款 accent */
+    --vermilion:#A6392C;
+    --vermilion-deep:#8f3024;
+    --shu-soft:#E7D3CC;      /* soft rose tint */
+    --green:#2E6B4E;         /* 緑 常磐 Tokiwa green — living / interactive accent */
+    --green-deep:#235038;
+    --midori-soft:#D6DFD7;   /* soft green tint */
+    --gold:#b8a98c;          /* retained warm neutral */
+    --ls-wide:0.34em;
+    --ls:0.08em;
+    --ease:cubic-bezier(.22,.61,.36,1);
+    --gothic:"DM Sans","Noto Sans TC",sans-serif;
+    --body:"DM Sans","Noto Sans TC",sans-serif;
+    --latin:"Cormorant","Noto Serif TC",serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth;background:var(--bg)}
+  body{
+    background:transparent;color:var(--ink);
+    font-family:var(--body);font-weight:400;font-size:16px;line-height:2.05;
+    letter-spacing:var(--ls);
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    overflow-x:hidden;
+  }
+  body::before,body::after{content:"";position:fixed;border-radius:50%;filter:blur(72px);opacity:.55;pointer-events:none;z-index:-1}
+  body::before{width:46vw;height:46vw;left:-13vw;top:-9vw;background:radial-gradient(circle,var(--shu-soft),transparent 68%)}
+  body::after{width:48vw;height:48vw;right:-15vw;top:34vh;background:radial-gradient(circle,var(--midori-soft),transparent 68%)}
+  a{color:inherit}
+  img{display:block;max-width:100%}
+
+  .wrap{max-width:1040px;margin:0 auto;padding:0 40px}
+
+  /* ---- fixed chrome ---- */
+  .wordmark{
+    position:fixed;top:34px;left:40px;z-index:50;
+    font-family:var(--gothic);font-weight:500;font-size:13px;
+    letter-spacing:.28em;color:var(--ink-strong);text-decoration:none;
+  }
+  .wordmark small{display:block;font-family:var(--latin);font-style:italic;
+    font-weight:400;font-size:12px;letter-spacing:.06em;color:var(--ink-faint);margin-top:4px}
+
+  .sidenav{
+    position:fixed;top:0;right:0;height:100vh;
+    display:flex;flex-direction:column;justify-content:center;gap:30px;
+    padding-right:30px;z-index:40;
+  }
+  .sidenav a{
+    writing-mode:vertical-rl;
+    font-family:var(--gothic);font-weight:400;font-size:11px;
+    letter-spacing:.3em;color:var(--ink-faint);text-decoration:none;
+    text-transform:uppercase;transition:.5s var(--ease);
+  }
+  .sidenav a:hover{color:var(--ink-strong)}
+  .sidenav a.active{color:var(--green-deep)}
+
+  .vcopy{
+    position:fixed;bottom:36px;left:40px;writing-mode:vertical-rl;
+    font-family:var(--latin);font-style:italic;font-size:13px;
+    letter-spacing:.16em;color:var(--ink-faint);z-index:40;
+  }
+
+  /* ---- reveal ---- */
+  .rv{opacity:0;transform:translateY(22px);transition:1s var(--ease)}
+  .rv.in{opacity:1;transform:none}
+
+  /* ---- hero ---- */
+  header.hero{min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:140px 40px 90px}
+  .hero .kicker{font-family:var(--gothic);font-weight:400;font-size:12px;
+    letter-spacing:.4em;color:var(--ink);padding-left:.4em;margin-bottom:30px;text-transform:uppercase}
+  .hero h1{font-family:var(--gothic);font-weight:500;color:var(--ink-strong);
+    font-size:clamp(46px,9vw,108px);letter-spacing:.06em;line-height:1.08}
+  .hero h1 em{font-family:var(--latin);font-style:italic;font-weight:400;display:block;
+    font-size:clamp(20px,3vw,30px);letter-spacing:.1em;color:var(--ink-faint);margin-top:18px}
+  .hero .role{margin-top:34px;font-weight:300;font-size:clamp(14px,1.6vw,17px);
+    color:var(--ink);letter-spacing:.14em}
+  .hero .portrait{
+    width:clamp(180px,22vw,240px);aspect-ratio:1;border-radius:50%;
+    object-fit:cover;margin:60px auto 0;filter:grayscale(.12) contrast(.97);
+    box-shadow:0 0 0 10px var(--bg), 0 0 0 11px rgba(166,57,44,.5), 0 30px 70px -40px rgba(0,0,0,.45);
+  }
+  .scrollcue{margin-top:54px;font-family:var(--gothic);font-size:10px;
+    letter-spacing:.3em;color:var(--ink-faint);writing-mode:vertical-rl;
+    height:70px;position:relative}
+  .scrollcue::after{content:"";position:absolute;left:50%;bottom:-22px;width:1px;height:18px;background:var(--ink-faint)}
+
+  /* ---- section frame ---- */
+  section{padding:92px 0}
+  .sec-head{display:flex;align-items:baseline;gap:22px;margin-bottom:54px}
+  .sec-no{font-family:var(--latin);font-style:italic;font-size:23px;color:var(--accent);letter-spacing:.05em}
+  .sec-title{font-family:var(--gothic);font-weight:500;color:var(--ink-strong);
+    font-size:clamp(24px,3.2vw,34px);letter-spacing:.12em}
+  .sec-sub{font-family:var(--latin);font-style:italic;font-size:16px;color:var(--ink-faint);margin-left:auto}
+  .prose{max-width:660px;font-weight:300;color:var(--ink)}
+  .prose p{margin-bottom:1.4em}
+  .prose p:last-child{margin-bottom:0}
+  .lead{font-size:clamp(18px,2.2vw,23px);font-weight:300;line-height:1.95;
+    letter-spacing:.04em;color:var(--ink-strong);max-width:740px}
+  .lead .latin{font-family:var(--latin);font-style:italic}
+
+  /* about split */
+  .about{display:grid;grid-template-columns:1.4fr 1fr;gap:60px;align-items:center}
+  .about .figure{aspect-ratio:4/5;background:var(--tint);overflow:hidden}
+  .about .figure img{width:100%;height:100%;object-fit:cover;filter:grayscale(.1)}
+
+  /* two-column lists */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:0 64px}
+  @media(max-width:760px){.cols{grid-template-columns:1fr}}
+
+  .entry{padding:30px 0;border-top:1px solid var(--line)}
+  .entry:first-child{border-top:0}
+  .entry .role-t{font-family:var(--gothic);font-weight:500;font-size:17px;
+    letter-spacing:.06em;color:var(--ink-strong);margin-bottom:6px}
+  .entry .org{font-weight:300;font-size:14px;color:var(--ink);line-height:1.7}
+  .entry .yr{font-family:var(--latin);font-style:italic;font-size:14px;color:var(--ink-faint);margin-top:6px;display:block}
+
+  /* education feature */
+  .edu{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+  .edu .ph{aspect-ratio:3/2;background:var(--tint-2);overflow:hidden}
+  .edu .ph img{width:100%;height:100%;object-fit:cover}
+  .edu h3{font-family:var(--gothic);font-weight:500;font-size:21px;letter-spacing:.06em;color:var(--ink-strong);margin-bottom:14px;line-height:1.5}
+  .edu .meta{font-weight:300;font-size:14.5px;color:var(--ink);line-height:2}
+  .edu .tagline{font-family:var(--latin);font-style:italic;font-size:17px;color:var(--ink-faint);margin-top:18px}
+
+  /* certifications / chips */
+  .chips{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
+  .chip{font-family:var(--gothic);font-weight:400;font-size:12.5px;letter-spacing:.1em;
+    color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:10px 20px;
+    background:var(--panel);transition:.4s var(--ease)}
+  .chip:hover{border-color:var(--green);color:var(--green-deep)}
+
+  /* skills grid */
+  .skills{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;background:var(--line);border:1px solid var(--line)}
+  .skill{background:var(--bg);padding:30px 28px}
+  .skill .k{font-family:var(--latin);font-style:italic;font-size:15px;color:var(--green);margin-bottom:10px}
+  .skill .v{font-weight:300;font-size:14.5px;color:var(--ink);line-height:1.95}
+  @media(max-width:760px){.skills{grid-template-columns:1fr}}
+
+  /* project cards */
+  .projects{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+  .proj{border-top:1px solid var(--ink-strong);padding-top:22px}
+  .proj .yr{font-family:var(--latin);font-style:italic;font-size:15px;color:var(--ink-faint)}
+  .proj h3{font-family:var(--gothic);font-weight:500;font-size:18px;letter-spacing:.05em;color:var(--ink-strong);margin:14px 0 12px;line-height:1.55}
+  .proj p{font-weight:300;font-size:13.5px;color:var(--ink);line-height:1.9}
+  .proj .links{font-family:var(--latin);font-style:italic;font-size:13.5px;color:var(--ink-faint);margin-top:12px;letter-spacing:.03em}
+  .proj .links a{color:var(--green);text-decoration:none;border-bottom:1px solid transparent;transition:.4s var(--ease)}
+  .proj .links a:hover{border-color:var(--green)}
+  .proj .thumb{display:block;aspect-ratio:16/10;overflow:hidden;border:1px solid var(--line);background:var(--panel-soft);margin-bottom:20px}
+  .proj .thumb img{width:100%;height:100%;object-fit:cover;object-position:top center;transition:transform .7s var(--ease);display:block}
+  .proj:hover .thumb img{transform:scale(1.04)}
+  @media(max-width:760px){.projects{grid-template-columns:1fr}}
+
+  /* thesis feature */
+  .thesis{background:var(--panel);border:1px solid var(--line);padding:clamp(36px,5vw,72px)}
+  .thesis .award{font-family:var(--gothic);font-size:11px;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:24px}
+  .thesis h3{font-family:var(--gothic);font-weight:500;color:var(--ink-strong);
+    font-size:clamp(26px,4vw,44px);letter-spacing:.04em;line-height:1.25;margin-bottom:8px}
+  .thesis .sub{font-family:var(--latin);font-style:italic;font-size:clamp(17px,2vw,21px);color:var(--ink-faint);margin-bottom:32px}
+  .thesis .body{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+  .thesis .body p{font-weight:300;font-size:14.5px;color:var(--ink);line-height:2;margin-bottom:1.2em}
+  .thesis .models{margin-top:14px}
+  .thesis .models .m{display:flex;gap:16px;padding:14px 0;border-top:1px solid var(--line)}
+  .thesis .models .m b{font-family:var(--gothic);font-weight:500;color:var(--ink-strong);min-width:88px;font-size:13.5px;letter-spacing:.08em}
+  .thesis .models .m span{font-weight:300;font-size:13.5px;color:var(--ink)}
+  @media(max-width:760px){.thesis .body{grid-template-columns:1fr;gap:24px}}
+
+  /* documentary */
+  .docs{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+  .doc{padding:28px 26px;background:var(--panel);border:1px solid var(--line);transition:.5s var(--ease)}
+  .doc:hover{transform:translateY(-4px)}
+  .doc .n{font-family:var(--latin);font-style:italic;font-size:15px;color:var(--green);margin-bottom:14px}
+  .doc h3{font-family:var(--gothic);font-weight:500;font-size:17px;letter-spacing:.05em;color:var(--ink-strong);margin-bottom:12px;line-height:1.5}
+  .doc p{font-weight:300;font-size:13px;color:var(--ink);line-height:1.85}
+  @media(max-width:760px){.docs{grid-template-columns:1fr}}
+
+  /* writing */
+  .pub-group{margin-bottom:46px}
+  .pub-group h4{font-family:var(--gothic);font-weight:500;font-size:13px;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:22px}
+  .pub{display:block;text-decoration:none;padding:20px 0;border-top:1px solid var(--line);
+    transition:.4s var(--ease)}
+  .pub:hover{padding-left:14px}
+  .pub .t{font-weight:600;font-size:15px;color:var(--ink-strong);line-height:1.7;letter-spacing:.04em}
+  .pub .src{font-family:var(--latin);font-style:italic;font-size:14px;color:var(--ink-faint);margin-top:6px}
+  .pub .arrow{float:right;color:var(--green);opacity:0;transition:.4s var(--ease)}
+  .pub:hover .arrow{opacity:1}
+
+  /* contact */
+  .contact{text-align:center;padding:120px 40px 90px}
+  .contact .big{font-family:var(--gothic);font-weight:500;font-size:clamp(28px,5vw,56px);
+    letter-spacing:.04em;color:var(--ink-strong);line-height:1.3}
+  .contact .big a{text-decoration:none;border-bottom:1px solid var(--line);transition:.4s var(--ease)}
+  .contact .big a:hover{border-color:var(--vermilion);color:var(--vermilion)}
+  .contact .ph{font-family:var(--latin);font-style:italic;font-size:20px;color:var(--ink-faint);margin-top:22px}
+  .cta{display:inline-flex;align-items:center;gap:12px;margin-top:40px;
+    font-family:var(--gothic);font-weight:500;font-size:13px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--vermilion);text-decoration:none;border:1px solid var(--vermilion);
+    border-radius:999px;padding:16px 32px;transition:.5s var(--ease)}
+  .cta:hover{background:var(--vermilion);color:var(--bg)}
+  .refs{display:flex;justify-content:center;gap:60px;flex-wrap:wrap;margin-top:70px}
+  .ref{text-align:left;max-width:260px}
+  .ref .nm{font-family:var(--gothic);font-weight:500;font-size:14px;letter-spacing:.06em;color:var(--ink-strong)}
+  .ref .af{font-weight:300;font-size:13px;color:var(--ink-faint);line-height:1.7;margin-top:6px}
+
+  footer{text-align:center;padding:60px 40px;border-top:1px solid var(--line)}
+  footer .mk{font-family:var(--gothic);font-weight:700;font-size:18px;letter-spacing:.2em;color:var(--ink-strong)}
+  footer .latin{font-family:var(--latin);font-style:italic;font-size:14px;color:var(--ink-faint);margin-top:10px}
+
+  @media(max-width:820px){
+    .sidenav,.vcopy{display:none}
+    .wordmark{left:24px}
+    .wrap{padding:0 24px}
+    .about,.edu{grid-template-columns:1fr;gap:32px}
+  }
+</style>
+</head>
+<body>
+
+  <a class="wordmark" href="#top">WU YUN-CHING<small>吳昀慶</small></a>
+
+  <nav class="sidenav" aria-label="sections">
+    <a href="#about">About</a>
+    <a href="#path">Path</a>
+    <a href="#work">Work</a>
+    <a href="#research">Research</a>
+    <a href="#writing">Writing</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <div class="vcopy">Designer · Researcher · Advocate</div>
+
+  <!-- ===== HERO ===== -->
+  <header class="hero" id="top">
+    <div class="kicker">Taipei · Amsterdam · Delft</div>
+    <h1>Wu Yun-Ching<em>吳 昀 慶</em></h1>
+    <p class="role">Designer&nbsp;&nbsp;·&nbsp;&nbsp;Researcher&nbsp;&nbsp;·&nbsp;&nbsp;Sustainability Advocate</p>
+    <img class="portrait" src="assets/portrait.jpg" alt="Portrait of Wu Yun-Ching">
+    <div class="scrollcue">SCROLL</div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ===== 01 ABOUT ===== -->
+    <section id="about">
+      <div class="about">
+        <div class="rv">
+          <p class="lead">
+            <span class="latin">Spatial. Social. Impact-driven.</span>
+            An urban researcher and advocate with a strong foundation in
+            spatial planning and socio-technical policy.
+          </p>
+          <div class="prose" style="margin-top:34px">
+            <p>I specialize in mixed-methods research — combining data-driven insights with qualitative narratives to analyze complex sustainability and mobility-transition challenges. My practice moves between Taipei and the Netherlands, bridging urban policy, data and design: from GIS analysis and documentary-making to Science &amp; Technology Studies (STS) and a more human-centered use of AI.</p>
+          </div>
+        </div>
+        <div class="figure rv"><img src="assets/photo3.jpg" alt="Wu Yun-Ching presenting"></div>
+      </div>
+    </section>
+
+    <!-- ===== 02 PATH (Education & Leadership) ===== -->
+    <section id="path">
+      <div class="sec-head rv">
+        <span class="sec-no">01</span>
+        <h2 class="sec-title">Education &amp; Leadership</h2>
+        <span class="sec-sub">Foundations</span>
+      </div>
+      <div class="edu rv">
+        <div>
+          <h3>MSc Metropolitan Analysis, Design &amp; Engineering</h3>
+          <div class="meta">TU Delft &amp; Wageningen University — Joint Degree<br>
+            AMS Institute, Amsterdam · 2022 — 2024</div>
+          <h3 style="margin-top:30px">MSc Building &amp; Planning</h3>
+          <div class="meta">National Taiwan University · Taipei · 2015 — 2019</div>
+          <div class="tagline">— and President of the Graduate Student Association, National Taiwan University (2016–2017).</div>
+        </div>
+        <div class="ph"><img src="assets/photo2.jpg" alt="MADE cohort"></div>
+      </div>
+
+      <div class="rv" style="margin-top:64px">
+        <h4 style="font-family:var(--gothic);font-weight:500;font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:20px">Certifications</h4>
+        <div class="chips">
+          <span class="chip">Street Experiments for Sustainable &amp; Resilient Cities</span>
+          <span class="chip">Advanced QGIS Analysis with AI &amp; Machine Learning</span>
+          <span class="chip">Sustainable Urban Development</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 03 WORK ===== -->
+    <section id="work">
+      <div class="sec-head rv">
+        <span class="sec-no">02</span>
+        <h2 class="sec-title">Experience</h2>
+        <span class="sec-sub">Practice</span>
+      </div>
+      <div class="cols rv">
+        <div class="entry">
+          <div class="role-t">Executive Supervisor &amp; Co-Founder</div>
+          <div class="org">Vision Zero Taiwan (NPO), Taipei<br>Mobility-transition policy research &amp; international collaboration</div>
+          <span class="yr">2024 — Now</span>
+        </div>
+        <div class="entry">
+          <div class="role-t">Associate Engineer</div>
+          <div class="org">Taipei City Government<br>Urban regeneration &amp; social-housing project management</div>
+          <span class="yr">2020 — 2022</span>
+        </div>
+        <div class="entry">
+          <div class="role-t">Mandarin Lecturer</div>
+          <div class="org">Southeast Asia Christian College, Philippines</div>
+          <span class="yr">2019</span>
+        </div>
+      </div>
+
+      <div class="sec-head rv" style="margin-top:90px">
+        <span class="sec-no">03</span>
+        <h2 class="sec-title">Skills &amp; Focus</h2>
+        <span class="sec-sub">Toolkit</span>
+      </div>
+      <div class="skills rv">
+        <div class="skill"><div class="k">Research</div><div class="v">Science &amp; Technology Studies (STS) · Urban Mobility · Citizen Participation · Human-Centered AI · Spatial Planning</div></div>
+        <div class="skill"><div class="k">Data &amp; Tools</div><div class="v">R · Python · Geographic Information Systems (GIS) · Canva · Adobe design tools</div></div>
+        <div class="skill"><div class="k">Languages</div><div class="v">English (professional) · Mandarin (native) · Dutch &amp; Japanese (A1–A2)</div></div>
+        <div class="skill"><div class="k">Craft &amp; Practice</div><div class="v">Documentary producing · knowledge clips · photography · social advocacy · citizen science</div></div>
+      </div>
+
+      <div class="sec-head rv" style="margin-top:90px">
+        <span class="sec-no">04</span>
+        <h2 class="sec-title">Selected Projects</h2>
+        <span class="sec-sub">Field work</span>
+      </div>
+      <div class="projects rv">
+        <div class="proj">
+          <a class="thumb" href="https://yunching0513.github.io/taiwan-mobility-atlas/" target="_blank" rel="noopener"><img src="assets/proj-mobility.jpg" alt="Taiwan Mobility Atlas preview" loading="lazy"></a>
+          <div class="yr">Interactive Atlas</div>
+          <h3>Taiwan Mobility Atlas</h3>
+          <p>A road-safety choropleth of 17,175 traffic deaths (2016–2025) across all 364 districts — mapping per-capita risk toward a “Dual-Zero” transit vision.</p>
+          <div class="links"><a href="https://yunching0513.github.io/taiwan-mobility-atlas/" target="_blank" rel="noopener">Open ↗</a></div>
+        </div>
+        <div class="proj">
+          <a class="thumb" href="https://yunching0513.github.io/taiwan-historical-maps/" target="_blank" rel="noopener"><img src="assets/proj-tw-maps.jpg" alt="Taiwan Old-Map Stroll preview" loading="lazy"></a>
+          <div class="yr">Historical Maps</div>
+          <h3>Taiwan Old-Map Stroll</h3>
+          <p>19 historical map sheets (1904–today) over modern streets, with GPS-triggered colonial-era postcards that “develop” as you walk.</p>
+          <div class="links"><a href="https://yunching0513.github.io/taiwan-historical-maps/" target="_blank" rel="noopener">Open ↗</a></div>
+        </div>
+        <div class="proj">
+          <a class="thumb" href="https://yunching0513.github.io/Netherlands-historical-map/?city=amsterdam&amp;year=1900" target="_blank" rel="noopener"><img src="assets/proj-nl-maps.jpg" alt="Netherlands Old-Map Stroll preview" loading="lazy"></a>
+          <div class="yr">Historical Maps</div>
+          <h3>Netherlands Old-Map Stroll</h3>
+          <p>“Oude-Kaart Wandeling” — overlaying ~1900 Bonnebladen maps on today’s Netherlands, with swipe then-and-now and offline use.</p>
+          <div class="links"><a href="https://yunching0513.github.io/Netherlands-historical-map/" target="_blank" rel="noopener">Open ↗</a></div>
+        </div>
+        <div class="proj">
+          <div class="yr">Ongoing</div>
+          <h3>Taipei Pedestrian Map</h3>
+          <p>Reviewing the city’s pedestrian environment using open data.</p>
+          <div class="links">Website · GitHub</div>
+        </div>
+        <div class="proj">
+          <div class="yr">2024</div>
+          <h3>Paris Social Housing Map</h3>
+          <p>A map presenting the Parisian city plan (PLUb).</p>
+          <div class="links">Website · GitHub</div>
+        </div>
+        <div class="proj">
+          <div class="yr">2023</div>
+          <h3>Sensing for Resilience</h3>
+          <p>A physical sensor prototype designed to monitor tree well-being in Amsterdam.</p>
+          <div class="links">Clip · UI</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 04 RESEARCH / THESIS ===== -->
+    <section id="research">
+      <div class="sec-head rv">
+        <span class="sec-no">05</span>
+        <h2 class="sec-title">Master’s Thesis</h2>
+        <span class="sec-sub">Gen-AI Future</span>
+      </div>
+      <div class="thesis rv">
+        <div class="award">★ 2nd Place, Scholar Category · GenAI-in-the-Fly Competition, TU Delft Library · 2024</div>
+        <h3>A Pandora or Jeffersonian Scenario?</h3>
+        <div class="sub">Developing a Citizen-AI urban street design assistant for road safety — MSc thesis, TU Delft</div>
+        <div class="body">
+          <div>
+            <p>This study uses Barber’s (1998) dilemma to ask whether AI leads to a harmful “Pandora” scenario or a beneficial “Jeffersonian” one that fosters democratic engagement. Focusing on road safety — an urgent challenge causing 1.19&nbsp;million fatalities a year, often in lower-income regions — it develops a citizen-friendly, AI-assisted website that disseminates proven strategies such as “Sustainable Safety” and the “Urban Street Design Guide,” bridging knowledge and language gaps worldwide.</p>
+            <p>Through three rounds of iterative prototyping — guided by citizen input from workshops and surveys — the final prototype integrates both human and AI elements, demonstrating that AI can enhance civic participation and public discourse.</p>
+          </div>
+          <div>
+            <p>Building on the Human-Centered AI (HCAI) framework, the study introduces a <b>Citizen-AI</b> model, supported by two original frameworks:</p>
+            <div class="models">
+              <div class="m"><b>ARIE</b><span>Avoid · Reduce · Insist · Encourage — an ethical evaluation model for AI developers.</span></div>
+              <div class="m"><b>3E</b><span>Education · Empowerment · Engagement — turning principle into civic practice.</span></div>
+            </div>
+            <p style="margin-top:18px">Together they offer a practical, ethical guide ensuring new systems prioritize human welfare and meaningful public involvement.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-head rv" style="margin-top:90px">
+        <span class="sec-no">06</span>
+        <h2 class="sec-title">Documentary Works</h2>
+        <span class="sec-sub">Storytelling</span>
+      </div>
+      <div class="docs rv" style="grid-template-columns:repeat(2,1fr);max-width:720px">
+        <div class="doc">
+          <div class="n">i</div>
+          <h3>Quay Walls Amsterdam</h3>
+          <p>The city’s ~300-year-old quay walls are deteriorating; a triple-helix collaboration explores viable solutions.</p>
+        </div>
+        <div class="doc">
+          <div class="n">ii</div>
+          <h3>Nature’s Return</h3>
+          <p>An online bank for sustainable investment — driving positive transformation in the business world.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 07 AWARDS ===== -->
+    <section id="awards">
+      <div class="sec-head rv">
+        <span class="sec-no">07</span>
+        <h2 class="sec-title">Awards &amp; Fellowships</h2>
+        <span class="sec-sub">Recognition</span>
+      </div>
+      <div class="cols rv">
+        <div class="entry">
+          <div class="role-t">Government Fellowship for Overseas Study</div>
+          <div class="org">Ministry of Education, Taiwan</div>
+          <span class="yr">2022 — 2025</span>
+        </div>
+        <div class="entry">
+          <div class="role-t">GenAI-in-the-Fly Competition — 2nd Place</div>
+          <div class="org">Scholar Category · TU Delft Library</div>
+          <span class="yr">2024</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 08 WRITING ===== -->
+    <section id="writing">
+      <div class="sec-head rv">
+        <span class="sec-no">08</span>
+        <h2 class="sec-title">Writing &amp; Publications</h2>
+        <span class="sec-sub">Selected</span>
+      </div>
+
+      <div class="pub-group rv">
+        <h4>Academic Publications &amp; Theses</h4>
+        <div class="pub"><div class="t">Developing a Citizen-AI Street Design Assistant for Road Safety <span style="color:var(--ink-faint)">— book chapter, submitted</span></div><div class="src">In “Data, Cities and Citizens”, TU Berlin · 2025</div></div>
+        <div class="pub"><div class="t">Exploring Healthy-City &amp; 10-Minute-City Planning Methods: A Case Study of the Utrecht Spatial Strategy 2040 (RSU2040)</div><div class="src">Symposium on Rethinking National Spatial Planning &amp; Regional Revitalization, New Taipei City · 2025</div></div>
+        <div class="pub"><div class="t">Developing a Citizen-AI Urban Street Design Assistant for Road Safety <span style="color:var(--ink-faint)">— MSc thesis</span></div><div class="src">TU Delft Repository · 2024</div></div>
+        <div class="pub"><div class="t">A Case Study of the Tainan Railway Underground Project: Decision-Making Processes of the Urban Regime <span style="color:var(--ink-faint)">— MSc thesis</span></div><div class="src">National Taiwan University · NDLTD · 2019</div></div>
+      </div>
+
+      <div class="pub-group rv">
+        <h4>Urbanism &amp; Mobility</h4>
+        <a class="pub" href="https://futurecity.cw.com.tw/article/3729" target="_blank" rel="noopener"><span class="arrow">↗</span><div class="t">台灣為何誤解「15 分鐘城市」？從巴黎看交通轉型與居住公平如何並存</div><div class="src">未來城市＠天下 · 2025</div></a>
+        <a class="pub" href="https://eyesonplace.net/2020/02/26/13749/" target="_blank" rel="noopener"><span class="arrow">↗</span><div class="t">飛天改遁地的鐵路立體化政策起源：北京有，我們也要有</div><div class="src">眼底城事 · 2020</div></a>
+        <a class="pub" href="https://reurl.cc/pKdMll" target="_blank" rel="noopener"><span class="arrow">↗</span><div class="t">Amsterdam’s Placemaking Innovation: Hand-in-Hand for a Sustainable City</div><div class="src">文化部 台灣社區通 · 2025</div></a>
+      </div>
+
+      <div class="pub-group rv">
+        <h4>Museology &amp; Society</h4>
+        <a class="pub" href="https://futurecity.cw.com.tw/article/3561" target="_blank" rel="noopener"><span class="arrow">↗</span><div class="t">荷蘭海豹幼稚園：不僅是救援中心，更是未來海洋生態教育館</div><div class="src">未來城市＠天下 · 2024</div></a>
+        <a class="pub" href="https://reurl.cc/xKZQ5b" target="_blank" rel="noopener"><span class="arrow">↗</span><div class="t">見證記憶的傷痕與力量，葡萄牙阿爾朱比抵抗與自由博物館</div><div class="src">中華民國博物館學會 · 2024</div></a>
+        <a class="pub" href="https://reurl.cc/laVem6" target="_blank" rel="noopener"><span class="arrow">↗</span><div class="t">社會設計，百年之道！荷蘭建築與設計博物館特展</div><div class="src">中華民國博物館學會 · 2023</div></a>
+        <a class="pub" href="https://www.tmaroc.org.tw/2023article30/" target="_blank" rel="noopener"><span class="arrow">↗</span><div class="t">步步落實居住正義的遠見：阿姆斯特丹博物館「住宅行動」特展</div><div class="src">中華民國博物館學會 · 2023</div></a>
+      </div>
+
+      <div class="pub-group rv">
+        <h4>Technology &amp; Geopolitics — Preprints</h4>
+        <a class="pub" href="https://doi.org/10.13140/RG.2.2.27051.96808" target="_blank" rel="noopener"><span class="arrow">↗</span><div class="t">Sovereign AI: Security Imaginaries, Tech Competition, and the Reshaping Geopolitical Landscape</div><div class="src">ResearchGate · 2025</div></a>
+        <a class="pub" href="https://doi.org/10.13140/RG.2.2.24535.38565" target="_blank" rel="noopener"><span class="arrow">↗</span><div class="t">From Microchip to Political Bargaining Chip in the New Cold War Era: TSMC Plants in Arizona and Kaohsiung</div><div class="src">ResearchGate · 2022</div></a>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== CONTACT ===== -->
+  <section class="contact" id="contact">
+    <div class="sec-no" style="font-size:23px">09</div>
+    <div class="big" style="margin-top:18px">Let’s build<br>more livable cities.<br>
+      <a href="mailto:r04544014@ntu.edu.tw">r04544014@ntu.edu.tw</a></div>
+    <div class="ph">+31 06-4783 9256 · Delft, the Netherlands</div>
+
+    <div class="refs">
+      <div class="ref">
+        <div class="nm">Prof. dr. Marjan P. Hagenzieker</div>
+        <div class="af">Thesis Supervisor · TU Delft</div>
+      </div>
+      <div class="ref">
+        <div class="nm">Dr. George Liu</div>
+        <div class="af">Senior Researcher, TU Munich · Founder, CityUX</div>
+      </div>
+    </div>
+    <div style="font-family:var(--latin);font-style:italic;font-size:14px;color:var(--ink-faint);margin-top:24px">References available on request.</div>
+  </section>
+
+  <footer>
+    <div class="mk">吳昀慶 · WU YUN-CHING</div>
+    <div class="latin">Designer, Researcher, and Sustainability Advocate</div>
+  </footer>
+
+<script>
+  // reveal on scroll
+  const io = new IntersectionObserver((es)=>{
+    es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{threshold:.12, rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+  // active side-nav link
+  const navLinks = [...document.querySelectorAll('.sidenav a')];
+  const map = navLinks.map(a=>({a, sec:document.querySelector(a.getAttribute('href'))})).filter(x=>x.sec);
+  const so = new IntersectionObserver((es)=>{
+    es.forEach(e=>{ if(e.isIntersecting){
+      navLinks.forEach(a=>a.classList.remove('active'));
+      const hit = map.find(m=>m.sec===e.target);
+      if(hit) hit.a.classList.add('active');
+    }});
+  },{threshold:.4});
+  map.forEach(m=>so.observe(m.sec));
+</script>
+</body>
+</html>
