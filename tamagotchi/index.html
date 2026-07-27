@@ -267,6 +267,13 @@
 
     <div class="block">
       <h2>設定</h2>
+      <div class="controls" style="margin-bottom:12px">
+        <div class="seg" id="skinSeg">
+          <button data-skin="classic">經典生物</button>
+          <button data-skin="husband">丈夫</button>
+        </div>
+        <span class="note" style="margin:0">只換長相，養法完全一樣</span>
+      </div>
       <div class="controls">
         <div class="seg" id="speedSeg">
           <button data-speed="1">×1 原版</button>
@@ -295,10 +302,10 @@
         <summary>成長分支與死亡條件</summary>
         <div class="rows">
           <div class="row"><b>蛋</b><span>5 分鐘後孵化。</span></div>
-          <div class="row"><b>幼年</b><span>1 小時。照顧良好 → まるっち；疏忽 → とんがりっち。</span></div>
-          <div class="row"><b>少年</b><span>1 天後進化。照顧良好 → たまっち；疏忽 → くちたまっち。</span></div>
-          <div class="row"><b>成年</b><span>再 2 天。たまっち 系 → まめっち／ぎんじろっち／ますくっち；くちたまっち 系 → くちぱっち／にょろっち／たらこっち。分歧看這階段累積幾次「疏忽」。</span></div>
-          <div class="row"><b>隱藏</b><span>成年後活到 15 歲且總疏忽 ≤ 5 次 → おやじっち。</span></div>
+          <div class="row"><b>幼年</b><span>1 小時。照顧良好 → まるっち／男孩；疏忽 → とんがりっち／頑皮男孩。</span></div>
+          <div class="row"><b>少年</b><span>1 天後進化。照顧良好 → たまっち／少年；疏忽 → くちたまっち／叛逆少年。</span></div>
+          <div class="row"><b>成年</b><span>再 2 天。良好系 → まめっち／ぎんじろっち／ますくっち（丈夫外觀：理想丈夫／上班族／宅丈夫）；疏忽系 → くちぱっち／にょろっち／たらこっち（顧家丈夫／沙發馬鈴薯／中年發福）。分歧看這階段累積幾次「疏忽」。</span></div>
+          <div class="row"><b>隱藏</b><span>成年後活到 15 歲且總疏忽 ≤ 5 次 → おやじっち／老伴。</span></div>
           <div class="row"><b>死亡</b><span>壽命到（照顧越差越短）、生病 12 小時不打針、或肚子與心情同時歸零連續 4 小時。</span></div>
         </div>
       </details>
@@ -466,6 +473,92 @@ const SPR = {
   ANGRY: S(['#...#','.#.#.','..#..','.#.#.','#...#']),
   CURSOR: S(['#..','##.','###','##.','#..']),
 };
+
+/* ------------------------------------------------------- 「丈夫」外觀點陣圖
+   沿用完全相同的角色代號，只是把生物換成人類男性的成長線，所以進化條件、
+   分支判斷、壽命這些遊戲規則一行都不用改。沒定義的代號會自動退回經典版。 */
+const SKIN_HUSBAND = {
+  /* 嬰兒：大頭小身體 */
+  BABY: S([
+    '............','............','....####....','...######...',
+    '...#.##.#...','...######...','....####....','...######...',
+    '..########..','..########..','...##..##...','............',
+  ]),
+  /* 男孩（照顧良好）：整齊的瀏海 */
+  MARUTCHI: S([
+    '...######...','..########..','...######...','...#.##.#...',
+    '...######...','....####....','..########..','.##########.',
+    '..########..','..########..','..###..###..','..###..###..',
+  ]),
+  /* 頑皮男孩（疏忽）：亂翹的頭髮 */
+  TONGARITCHI: S([
+    '..#..##..#..','..########..','...######...','...#.##.#...',
+    '...######...','....####....','..########..','.##########.',
+    '..########..','..########..','..###..###..','..###..###..',
+  ]),
+  /* 少年（照顧良好）：側分、抽高 */
+  TAMATCHI: S([
+    '..#########.','..########..','...#.##.#...','...######...',
+    '....####....','.....##.....','..########..','.##########.',
+    '.##########.','..########..','..###..###..','..###..###..',
+  ]),
+  /* 叛逆少年（疏忽）：連帽外套 */
+  KUCHITAMATCHI: S([
+    '..########..','.##########.','.##.####.##.','.##.#..#.##.',
+    '.##.####.##.','..########..','..########..','.##########.',
+    '.##########.','..########..','..###..###..','..###..###..',
+  ]),
+  /* 理想丈夫：襯衫敞開的領口 */
+  MAMETCHI: S([
+    '...######...','..########..','...#.##.#...','...######...',
+    '....####....','.....##.....','..###..###..','.##########.',
+    '.##########.','..########..','..###..###..','..###..###..',
+  ]),
+  /* 上班族丈夫：右手提著公事包 */
+  GINJIROTCHI: S([
+    '...#####....','..######....','..#.##.#....','..######....',
+    '...####.....','....##......','.###..###...','.########...',
+    '.######..###','.######..###','..##..##....','..##..##....',
+  ]),
+  /* 宅丈夫：戴著耳機 */
+  MASKUTCHI: S([
+    '.#........#.','.##########.','.##.####.##.','.##.#..#.##.',
+    '.##.####.##.','....####....','.....##.....','..########..',
+    '.##########.','..########..','..###..###..','..###..###..',
+  ]),
+  /* 顧家丈夫：圍裙一路蓋到腳 */
+  KUCHIPATCHI: S([
+    '...######...','..########..','...#.##.#...','...######...',
+    '....####....','.....##.....','..########..','.##########.',
+    '.#.######.#.','..########..','..########..','..########..',
+  ]),
+  /* 沙發馬鈴薯丈夫：整個癱下去 */
+  NYOROTCHI: S([
+    '............','............','....####....','...######...',
+    '...#.##.#...','...######...','..########..','.##########.',
+    '############','############','.##########.','..##....##..',
+  ]),
+  /* 中年發福丈夫：肚子最寬 */
+  TARAKOTCHI: S([
+    '....####....','...######...','...#.##.#...','...######...',
+    '....####....','.....##.....','..########..','.##########.',
+    '############','############','.##########.','..###..###..',
+  ]),
+  /* 老伴：禿頭配八字鬍 */
+  OYAJITCHI: S([
+    '....####....','...######...','...#.##.#...','...######...',
+    '..#.####.#..','....####....','.....##.....','..########..',
+    '.##########.','..########..','..###..###..','..###..###..',
+  ]),
+  /* 睡著：側躺，頭在左邊、閉著眼 */
+  LYING: S([
+    '............','............','............','............',
+    '............','............','............','..####......',
+    '.######.....','.##..##.....','.###########','..#########.',
+  ]),
+};
+/* 幽靈和墓碑兩種外觀共用，直接退回經典版 */
+const SKINS = { classic: null, husband: SKIN_HUSBAND };
 
 /* --------------------------------------------------------------- 圖示點陣 */
 const ICON_ART = {
@@ -654,6 +747,7 @@ let statPage = 0;
 let fx = null;                /* {type, t, dur, data} */
 let mini = null;              /* 猜左右小遊戲 */
 let speed = 60;
+let skin = 'classic';         /* classic | husband —— 只換長相，規則完全相同 */
 let frame = 0;                /* 動畫影格計數 */
 let flash = 0;                /* 呼叫時的螢幕閃爍 */
 
@@ -665,7 +759,7 @@ let walkX = PET_X, walkDir = 1, walkPause = 0, walkTick = 0;
 function save(){
   try{
     G.lastReal = Date.now();
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ g: G, speed, soundOn, shell: shellIdx }));
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ g: G, speed, soundOn, shell: shellIdx, skin }));
   }catch(e){}
 }
 function load(){
@@ -676,6 +770,7 @@ function load(){
     speed = raw.speed || 60;
     soundOn = raw.soundOn !== false;
     shellIdx = raw.shell || 0;
+    skin = SKINS[raw.skin] !== undefined ? raw.skin : 'classic';
     catchUpSince(G.lastReal || Date.now());
   } else {
     G = freshGame();
@@ -948,7 +1043,12 @@ function drawPoop(){
   if (G.poop > 0) blit(SPR.POOP, 1, 10);
   if (G.poop > 1) blit(SPR.POOP, 25, 10);
 }
-function petSprite(){ return SPR[G.char] || SPR.MARUTCHI; }
+/* 依目前外觀取圖；該外觀沒定義的代號自動退回經典版 */
+function skinSpr(name){
+  const t = SKINS[skin];
+  return (t && t[name]) || SPR[name];
+}
+function petSprite(){ return skinSpr(G.char) || skinSpr('MARUTCHI'); }
 
 /* 沒事的時候在畫面上晃來晃去。有便便就縮小可走的範圍（繞開它），
    睡著、生病、還是蛋、或正在操作選單時就站著不動。 */
@@ -986,7 +1086,7 @@ function drawMain(){
     return;
   }
   if (G.sleeping){
-    blit(SPR.LYING, PET_X, PET_Y);
+    blit(skinSpr("LYING"), PET_X, PET_Y);
     if (frame % 8 < 5){ textAt('Z', 28, 1); textAt('Z', 24, 6); }
     drawPoop();
     return;
@@ -1061,7 +1161,7 @@ function drawFx(){
       } else if (p < .72){
         if (frame % 2) blit(SPR.EGG_CRACK, 8, 0);
       } else {
-        blit(SPR.BABY, PET_X, PET_Y + ((frame % 4 < 2) ? 0 : 1));
+        blit(skinSpr("BABY"), PET_X, PET_Y + ((frame % 4 < 2) ? 0 : 1));
         if (frame % 4 < 2){ blit(SPR.HEART, 2, 2); blit(SPR.HEART, 25, 3); }
       }
       break;
@@ -1114,13 +1214,14 @@ function drawFx(){
     }
     case 'death': {
       if (p < .3){
-        blit(SPR.LYING, PET_X, PET_Y);
+        blit(skinSpr("LYING"), PET_X, PET_Y);
       } else if (p < .62){
-        const rise = Math.round((1 - (p - .3) / .32) * 8);
-        blit(SPR.GHOST, PET_X, rise - 8);
-        blit(SPR.LYING, PET_X, PET_Y);
+        /* 從遺體所在的位置往上飄，一路飄出畫面外（角色 12 格高） */
+        const k = (p - .3) / .32;
+        blit(skinSpr("GHOST"), PET_X, Math.round(PET_Y - k * (PET_Y + 12)));
+        blit(skinSpr("LYING"), PET_X, PET_Y);
       } else {
-        blit(SPR.GRAVE, PET_X, 4);
+        blit(skinSpr("GRAVE"), PET_X, 4);
       }
       break;
     }
@@ -1129,7 +1230,7 @@ function drawFx(){
 
 function drawDead(){
   const t = Math.floor(Date.now() / 1600) % 2;
-  if (t === 0){ blit(SPR.GRAVE, PET_X, 4); }
+  if (t === 0){ blit(skinSpr("GRAVE"), PET_X, 4); }
   else { textC('AGE ' + G.deathAge, 1); textC('RIP', 9); }
 }
 
@@ -1300,6 +1401,14 @@ function updateSpeedSeg(){
   [...document.querySelectorAll('#speedSeg button')].forEach(b =>
     b.classList.toggle('on', Number(b.dataset.speed) === speed));
 }
+function updateSkinSeg(){
+  [...document.querySelectorAll('#skinSeg button')].forEach(b =>
+    b.classList.toggle('on', b.dataset.skin === skin));
+}
+document.getElementById('skinSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  skin = b.dataset.skin; updateSkinSeg(); save();
+});
 document.getElementById('speedSeg').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   speed = Number(b.dataset.speed); updateSpeedSeg(); save();
@@ -1320,6 +1429,7 @@ buildSwatches();
 load();
 applyShell();
 updateSpeedSeg();
+updateSkinSeg();
 updateSoundBtn();
 readColors();
 fit();
