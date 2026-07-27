@@ -117,6 +117,18 @@
 
   canvas#screen{width:100%;height:auto;display:block;image-rendering:pixelated}
 
+  /* 名字貼紙：像當年大家在機身上貼的姓名標籤，任何文字都貼得上去 */
+  .nameplate{
+    margin-top:14px;max-width:74%;
+    padding:4px 12px;border-radius:3px;
+    background:linear-gradient(#fffdf4,#f0ead6);
+    box-shadow:0 1px 2px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.9);
+    color:#4a4433;font-size:12.5px;line-height:1.5;letter-spacing:.06em;
+    transform:rotate(-1.2deg);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .nameplate[hidden]{display:none}
+
   .brand{
     margin-top:auto;padding:9px 0 6px;
     font-family:var(--mono);font-size:11px;letter-spacing:.26em;
@@ -188,6 +200,15 @@
   }
   .ghost:hover{color:var(--ink);border-color:var(--ink-dim)}
 
+  .namefield{display:inline-flex;align-items:center;gap:10px}
+  .namefield span{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--ink-dim)}
+  .namefield input{
+    background:var(--bg2);border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);font-family:var(--sans);font-size:13px;padding:7px 11px;width:190px;
+  }
+  .namefield input::placeholder{color:var(--ink-dim);opacity:.7}
+  .namefield input:focus{outline:2px solid var(--ink-dim);outline-offset:1px}
+
   .swatches{display:flex;gap:8px}
   .sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;
       box-shadow:inset 0 -3px 6px rgba(0,0,0,.3),inset 0 3px 5px rgba(255,255,255,.4)}
@@ -218,6 +239,7 @@
         <canvas id="screen" width="512" height="256" aria-label="電子雞畫面"></canvas>
         <div class="iconrow bottom" id="iconBottom"></div>
       </div>
+      <div class="nameplate" id="nameplate" hidden></div>
       <div class="brand">Tamagotchi</div>
       <div class="buttons">
         <button class="btn" id="btnA" aria-label="A 選擇">A<small>選擇</small></button>
@@ -268,6 +290,12 @@
     <div class="block">
       <h2>設定</h2>
       <div class="controls" style="margin-bottom:12px">
+        <label class="namefield">
+          <span>名字</span>
+          <input id="nameInput" type="text" maxlength="14" placeholder="還沒取名字" autocomplete="off">
+        </label>
+      </div>
+      <div class="controls" style="margin-bottom:12px">
         <div class="seg" id="skinSeg">
           <button data-skin="classic">經典生物</button>
           <button data-skin="husband">丈夫</button>
@@ -290,6 +318,11 @@
         <code>×1</code> 是 1996 年原版的真實時間：蛋 5 分鐘孵化、幼年期 1 小時、成年要 3 天、壽命約 20 天。
         <code>×60</code>（預設）下 1 秒＝1 分鐘，一個「電子雞日」約 24 分鐘，一個下午就能養到成年。
         切換速度不會重置牠的年齡。
+      </p>
+      <p class="note">
+        名字會貼在機身上，中文、emoji 都可以。LCD 的點陣字型只有英數，
+        所以<strong>取英文或數字名字時，狀態頁會多出一頁顯示名字</strong>；中文名字只會出現在機身貼紙上。
+        重新孵一顆蛋等於新的生命，名字不會繼承。
       </p>
       <p class="note">
         關掉分頁牠一樣會餓、會大便、會變老，但<strong>離線期間一律以真實時間計算</strong>（不套用加速倍率，最多補 72 小時）——
@@ -350,8 +383,29 @@ const FONT = {
   '-':['...','...','###','...','...'], '+':['...','.#.','###','.#.','...'],
 };
 
-/* ------------------------------------------------------------ 角色點陣圖 */
-const S = rows => ({ w: rows[0].length, h: rows.length, rows });
+/* ---------------------------------------------------------------- 調色盤
+   全部刻意壓在比 LCD 底色（#9db08a）更深的範圍：這樣畫面讀起來還是「液晶上的
+   墨點」，只是墨水有了顏色，而不是變成一張貼上去的彩圖。 */
+const C = { INK:1, SKIN:2, HAIR:3, BLUE:4, RED:5, NAVY:6, GREEN:7, PINK:8, GOLD:9, GREY:10, POOP:11 };
+const PAL = [
+  null,        /* 0 = 不亮 */
+  '#20281c',   /* INK   —— 預設墨色，跟著 --lcd-on 走 */
+  '#7d5136',   /* SKIN  */
+  '#241a11',   /* HAIR  */
+  '#2f5480',   /* BLUE  */
+  '#83322c',   /* RED   */
+  '#1f2b38',   /* NAVY  */
+  '#3c6b3a',   /* GREEN */
+  '#8c4a63',   /* PINK  */
+  '#7d6320',   /* GOLD  */
+  '#59604f',   /* GREY  */
+  '#4a3a22',   /* POOP  */
+];
+
+/* ------------------------------------------------------------ 角色點陣圖
+   bands 決定每個像素用哪個顏色：[起始列, 結束列, 顏色, 起始欄?, 結束欄?]，
+   由前往後第一個命中的為準，都沒中就是 INK。 */
+const S = (rows, bands) => ({ w: rows[0].length, h: rows.length, rows, bands: bands || null });
 
 const SPR = {
   /* 最寬處刻意壓在中線以下，才會是蛋形而不是圓形 */
@@ -373,80 +427,80 @@ const SPR = {
     '............','.....##.....','....####....','...######...',
     '..########..','..##.##.##..','..########..','..###..###..',
     '...######...','....####....','............','............',
-  ]),
+  ], [[0,11,C.GREY]]),
 
   MARUTCHI: S([
     '....####....','..########..','.##########.','###.####.###',
     '###.####.###','############','####....####','.##########.',
     '..########..','...######...','...##..##...','..###..###..',
-  ]),
+  ], [[0,11,C.GREY]]),
   TONGARITCHI: S([
     '.....##.....','....####....','..########..','.##########.',
     '###.####.###','###.####.###','############','####....####',
     '.##########.','...######...','...##..##...','..###..###..',
-  ]),
+  ], [[0,11,C.GOLD]]),
 
   /* 圓頂窄頭、下身較寬，跟まるっち 的等寬圓球區隔開；眼睛內縮才不會被身體邊緣吃掉 */
   TAMATCHI: S([
     '.....##.....','...######...','..########..','.##########.',
     '.##.####.##.','.##########.','############','####....####',
     '############','.##########.','...##..##...','..###..###..',
-  ]),
+  ], [[0,11,C.BLUE]]),
   KUCHITAMATCHI: S([
     '....####....','..########..','.##########.','##.######.##',
     '##.######.##','############','###......###','.###.##.###.',
     '..########..','...######...','...##..##...','..###..###..',
-  ]),
+  ], [[0,11,C.GREEN]]),
 
   MAMETCHI: S([
     '.#........#.','.#........#.','.##########.','###.####.###',
     '###.####.###','############','####....####','.##########.',
     '..########..','...######...','...##..##...','..###..###..',
-  ]),
+  ], [[0,1,C.GOLD],[2,11,C.BLUE]]),
   /* 大眼睛往內移一格，外緣才留得住身體輪廓（貼邊會把牠切成星形） */
   GINJIROTCHI: S([
     '.....##.....','.....##.....','.##########.','###..##..###',
     '###..##..###','############','####....####','.##########.',
     '..########..','...######...','...##..##...','..###..###..',
-  ]),
+  ], [[0,1,C.GOLD],[2,11,C.GREY]]),
   MASKUTCHI: S([
     '....####....','..########..','.##########.','############',
     '.#..#..#..#.','.#........#.','############','.###....###.',
     '..########..','...######...','...##..##...','..###..###..',
-  ]),
+  ], [[4,5,C.RED],[0,11,C.NAVY]]),
   KUCHIPATCHI: S([
     '.#........#.','.##......##.','..########..','.##########.',
     '##.######.##','##.######.##','############','..########..',
     '.##########.','.###....###.','.##########.','..##....##..',
-  ]),
+  ], [[9,11,C.GOLD],[0,11,C.GREEN]]),
   /* 蛇頭置中、身體往下收成盤起來的底座（原本整隻偏左，站位看起來會歪） */
   NYOROTCHI: S([
     '....####....','..########..','..##.##.##..','..########..',
     '..##....##..','..########..','...######...','....####....',
     '.....###....','....#####...','..#########.','.##########.',
-  ]),
+  ], [[0,7,C.PINK],[8,11,C.NAVY]]),
   TARAKOTCHI: S([
     '............','....####....','..########..','.##########.',
     '####.##.####','############','.###....###.','.##########.',
     '..########..','...######...','...##..##...','..###..###..',
-  ]),
+  ], [[0,11,C.PINK]]),
   /* 鬍子畫成兩側外翻的凹口 + 下方嘴巴；原本四個分散的洞只會看起來像雜訊 */
   OYAJITCHI: S([
     '....####....','..########..','.##########.','############',
     '###.####.###','############','#..######..#','.###....###.',
     '.##########.','...######...','...##..##...','..###..###..',
-  ]),
+  ], [[6,6,C.GREY],[0,7,C.SKIN],[8,11,C.NAVY]]),
 
   GHOST: S([
     '....####....','..########..','.##########.','##.######.##',
     '##.######.##','############','.###....###.','############',
     '############','############','############','##.##.##.##.',
-  ]),
+  ], [[0,11,C.GREY]]),
   GRAVE: S([
     '..########..','.##########.','############','#####..#####',
     '#####..#####','###......###','###......###','#####..#####',
     '#####..#####','############','############','############',
-  ]),
+  ], [[0,11,C.GREY]]),
   /* 躺著（睡覺／臨終）—— 內容壓在下半部，畫在 PET_Y 時剛好貼著地面 */
   LYING: S([
     '............','............','............','............',
@@ -454,18 +508,18 @@ const SPR = {
     '##..####..##','############','.##########.','...######...',
   ]),
 
-  POOP: S(['..##..','.####.','..##..','.####.','######','######']),
+  POOP: S(['..##..','.####.','..##..','.####.','######','######'], [[0,5,C.POOP]]),
   SKULL: S(['.####.','######','#.##.#','######','.####.','.#..#.']),
-  HEART: S(['.#.#.','#####','#####','.###.','..#..']),
+  HEART: S(['.#.#.','#####','#####','.###.','..#..'], [[0,4,C.RED]]),
   HEART_E: S(['.#.#.','#.#.#','#...#','.#.#.','..#..']),
   MEAL: S([
     '...####...','..######..','.########.','..........',
     '##########','.########.','..######..','...####...',
-  ]),
+  ], [[0,2,C.RED],[3,7,C.INK]]),
   SNACK: S([
     '..######..','.########.','.########.','..######..',
     '....##....','....##....','....##....','....##....',
-  ]),
+  ], [[0,3,C.PINK],[4,7,C.INK]]),
   ARROW: S(['...#...','..##...','.###...','#######','.###...','..##...','...#...']),
   SYRINGE: S([
     '........##','.......###','..######..','.########.','..######..','#.........',
@@ -483,79 +537,79 @@ const SKIN_HUSBAND = {
     '............','............','....####....','...######...',
     '...#.##.#...','...######...','....####....','...######...',
     '..########..','..########..','...##..##...','............',
-  ]),
+  ], [[2,6,C.SKIN],[7,11,C.BLUE]]),
   /* 男孩（照顧良好）：整齊的瀏海 */
   MARUTCHI: S([
     '...######...','..########..','...######...','...#.##.#...',
     '...######...','....####....','..########..','.##########.',
     '..########..','..########..','..###..###..','..###..###..',
-  ]),
+  ], [[0,1,C.HAIR],[2,5,C.SKIN],[6,9,C.BLUE],[10,11,C.NAVY]]),
   /* 頑皮男孩（疏忽）：亂翹的頭髮 */
   TONGARITCHI: S([
     '..#..##..#..','..########..','...######...','...#.##.#...',
     '...######...','....####....','..########..','.##########.',
     '..########..','..########..','..###..###..','..###..###..',
-  ]),
+  ], [[0,1,C.HAIR],[2,5,C.SKIN],[6,9,C.GREEN],[10,11,C.NAVY]]),
   /* 少年（照顧良好）：側分、抽高 */
   TAMATCHI: S([
     '..#########.','..########..','...#.##.#...','...######...',
     '....####....','.....##.....','..########..','.##########.',
     '.##########.','..########..','..###..###..','..###..###..',
-  ]),
+  ], [[0,1,C.HAIR],[2,5,C.SKIN],[6,9,C.BLUE],[10,11,C.NAVY]]),
   /* 叛逆少年（疏忽）：連帽外套 */
   KUCHITAMATCHI: S([
     '..########..','.##########.','.##.####.##.','.##.#..#.##.',
     '.##.####.##.','..########..','..########..','.##########.',
     '.##########.','..########..','..###..###..','..###..###..',
-  ]),
+  ], [[2,4,C.SKIN,4,7],[0,9,C.NAVY],[10,11,C.NAVY]]),
   /* 理想丈夫：襯衫敞開的領口 */
   MAMETCHI: S([
     '...######...','..########..','...#.##.#...','...######...',
     '....####....','.....##.....','..###..###..','.##########.',
     '.##########.','..########..','..###..###..','..###..###..',
-  ]),
+  ], [[0,1,C.HAIR],[2,5,C.SKIN],[7,9,C.RED,5,6],[6,9,C.BLUE],[10,11,C.NAVY]]),
   /* 上班族丈夫：右手提著公事包 */
   GINJIROTCHI: S([
     '...#####....','..######....','..#.##.#....','..######....',
     '...####.....','....##......','.###..###...','.########...',
     '.######..###','.######..###','..##..##....','..##..##....',
-  ]),
+  ], [[0,1,C.HAIR],[2,5,C.SKIN],[8,9,C.GOLD,9,11],[6,11,C.NAVY]]),
   /* 宅丈夫：戴著耳機 */
   MASKUTCHI: S([
     '.#........#.','.##########.','.##.####.##.','.##.#..#.##.',
     '.##.####.##.','....####....','.....##.....','..########..',
     '.##########.','..########..','..###..###..','..###..###..',
-  ]),
+  ], [[2,4,C.SKIN,4,7],[5,6,C.SKIN],[0,4,C.INK],[7,9,C.GREEN],[10,11,C.NAVY]]),
   /* 顧家丈夫：圍裙一路蓋到腳 */
   KUCHIPATCHI: S([
     '...######...','..########..','...#.##.#...','...######...',
     '....####....','.....##.....','..########..','.##########.',
     '.#.######.#.','..########..','..########..','..########..',
-  ]),
+  ], [[0,1,C.HAIR],[2,5,C.SKIN],[6,7,C.GREEN],[8,11,C.RED]]),
   /* 沙發馬鈴薯丈夫：整個癱下去 */
   NYOROTCHI: S([
     '............','............','....####....','...######...',
     '...#.##.#...','...######...','..########..','.##########.',
     '############','############','.##########.','..##....##..',
-  ]),
+  ], [[2,5,C.SKIN],[6,10,C.GOLD],[11,11,C.NAVY]]),
   /* 中年發福丈夫：肚子最寬 */
   TARAKOTCHI: S([
     '....####....','...######...','...#.##.#...','...######...',
     '....####....','.....##.....','..########..','.##########.',
     '############','############','.##########.','..###..###..',
-  ]),
+  ], [[0,0,C.HAIR],[1,5,C.SKIN],[6,10,C.PINK],[11,11,C.NAVY]]),
   /* 老伴：禿頭配八字鬍 */
   OYAJITCHI: S([
     '....####....','...######...','...#.##.#...','...######...',
     '..#.####.#..','....####....','.....##.....','..########..',
     '.##########.','..########..','..###..###..','..###..###..',
-  ]),
+  ], [[4,4,C.GREY],[0,6,C.SKIN],[7,9,C.GREEN],[10,11,C.NAVY]]),
   /* 睡著：側躺，頭在左邊、閉著眼 */
   LYING: S([
     '............','............','............','............',
     '............','............','............','..####......',
     '.######.....','.##..##.....','.###########','..#########.',
-  ]),
+  ], [[7,9,C.SKIN],[10,11,C.BLUE]]),
 };
 /* 幽靈和墓碑兩種外觀共用，直接退回經典版 */
 const SKINS = { classic: null, husband: SKIN_HUSBAND };
@@ -596,14 +650,25 @@ function put(x, y, v = 1){
   x |= 0; y |= 0;
   if (x >= 0 && x < W && y >= 0 && y < H) buf[y * W + x] = v;
 }
+function bandColor(sp, y, x){
+  if (!sp.bands) return C.INK;
+  for (const [y0, y1, c, x0, x1] of sp.bands){
+    if (y < y0 || y > y1) continue;
+    if (x0 !== undefined && (x < x0 || x > x1)) continue;
+    return c;
+  }
+  return C.INK;
+}
 function blit(sp, ox, oy, opt){
   opt = opt || {};
-  const {flip = false, rowFrom = 0, rowTo = 1e9} = opt;
+  const {flip = false, rowFrom = 0, rowTo = 1e9, color = 0} = opt;
   for (let y = 0; y < sp.h; y++){
     if (y < rowFrom || y > rowTo) continue;
     const row = sp.rows[y];
     for (let x = 0; x < sp.w; x++){
-      if (row[x] === '#') put(ox + (flip ? sp.w - 1 - x : x), oy + y);
+      if (row[x] !== '#') continue;
+      /* bands 以未翻轉的座標判定，翻轉只影響畫到哪 */
+      put(ox + (flip ? sp.w - 1 - x : x), oy + y, color || bandColor(sp, y, x));
     }
   }
 }
@@ -632,17 +697,19 @@ function fit(){
 let COL_ON = '#20281c', COL_OFF = 'rgba(32,40,28,.075)';
 function readColors(){
   const cs = getComputedStyle(document.documentElement);
-  COL_ON  = cs.getPropertyValue('--lcd-on').trim()  || COL_ON;
+  COL_ON  = cs.getPropertyValue("--lcd-on").trim()  || COL_ON;
+  PAL[C.INK] = COL_ON;
   COL_OFF = cs.getPropertyValue('--lcd-off').trim() || COL_OFF;
 }
 function paint(){
   const dot = Math.max(1, cell - Math.max(1, Math.round(cell * 0.14)));
   const off = Math.floor((cell - dot) / 2);
   cx.clearRect(0, 0, cv.width, cv.height);
-  const on = COL_ON, dim = COL_OFF;
+  const dim = COL_OFF;
   for (let y = 0; y < H; y++){
     for (let x = 0; x < W; x++){
-      cx.fillStyle = buf[y * W + x] ? on : dim;
+      const v = buf[y * W + x];
+      cx.fillStyle = v ? (PAL[v] || COL_ON) : dim;
       cx.fillRect(x * cell + off, y * cell + off, dot, dot);
     }
   }
@@ -722,6 +789,7 @@ let G;
 function freshGame(){
   return {
     v: 1,
+    name: '',
     stage: 'EGG', char: 'EGG',
     bornWall: birthClock(),    /* 虛擬時鐘的原點，用來推算「現在幾點」 */
     gtMin: 0,                  /* 累積遊戲分鐘 */
@@ -976,7 +1044,11 @@ function feed(kind){
 
 function hatchNew(){
   G = freshGame(); sel = -1; mode = 'main'; fx = null; mini = null;
-  resetWalk(); SFX.ok(); save();
+  resetWalk();
+  /* 新的一顆蛋是新的生命，名字不繼承 */
+  document.getElementById('nameInput').value = '';
+  updateNameplate();
+  SFX.ok(); save();
 }
 
 /* ================================================================ 按鍵處理 */
@@ -984,7 +1056,7 @@ function pressA(){
   if (!G.alive){ hatchNew(); return; }
   if (mode === 'fx'){ return; }
   if (mode === 'foodmenu'){ foodPick ^= 1; SFX.click(); return; }
-  if (mode === 'stats'){ statPage = (statPage + 1) % 4; SFX.click(); return; }
+  if (mode === 'stats'){ statPage = (statPage + 1) % statPages(); SFX.click(); return; }
   if (mode === 'game'){ if (mini && mini.phase === 'ask') guess(0); return; }
   sel = sel >= SELECTABLE - 1 ? -1 : sel + 1;
   SFX.click(); syncIcons();
@@ -994,7 +1066,7 @@ function pressB(){
   if (mode === 'fx'){ return; }
   /* 先離開選單再餵，否則 feed() 起的動畫會被蓋掉 */
   if (mode === 'foodmenu'){ mode = 'main'; feed(foodPick); return; }
-  if (mode === 'stats'){ statPage = (statPage + 1) % 4; SFX.click(); return; }
+  if (mode === 'stats'){ statPage = (statPage + 1) % statPages(); SFX.click(); return; }
   if (mode === 'game'){ if (mini && mini.phase === 'ask') guess(1); return; }
   if (isEgg()){ SFX.no(); return; }
   if (sel >= 0) act(sel);
@@ -1105,11 +1177,21 @@ function drawFoodMenu(){
   if (frame % 6 < 4) blit(SPR.CURSOR, foodPick === 0 ? 0 : 16, 9);
 }
 
+/* LCD 的 3×5 字型只有英數，中文顯示不出來 —— 濾掉畫不出來的字元，
+   全部濾光就代表這個名字沒辦法上 LCD，那一頁就直接不存在。 */
+function lcdName(){
+  let s = '';
+  for (const ch of String(G.name || '').toUpperCase()) if (FONT[ch]) s += ch;
+  return s.trim().slice(0, 7);
+}
+const statPages = () => (lcdName() ? 5 : 4);
+
 function hearts(n, y){
   for (let i = 0; i < 4; i++)
     blit(i < n ? SPR.HEART : SPR.HEART_E, 4 + i * 7, y);
 }
 function drawStats(){
+  if (statPage >= statPages()) statPage = 0;   /* 名字被清掉時那一頁會消失 */
   if (statPage === 0){
     textAt('AGE', 1, 1);  textAt(String(ageDays()), 18, 1);
     textAt('OZ',  1, 9);  textAt(String(G.weight), 18, 9);
@@ -1117,6 +1199,9 @@ function drawStats(){
     textC('HUNGRY', 1); hearts(G.hunger, 9);
   } else if (statPage === 2){
     textC('HAPPY', 1);  hearts(G.happy, 9);
+  } else if (statPage === 4){
+    textC('NAME', 1);
+    textC(lcdName(), 9);
   } else {
     textC('DISCIPL', 1);
     /* 有外框的進度條，沒填滿的部分留空才看得出差別 */
@@ -1167,7 +1252,7 @@ function drawFx(){
       break;
     }
     case 'evolve': {
-      if (p < .7){ if (frame % 2) { for (let i = 0; i < W * H; i++) buf[i] = 1; } }
+      if (p < .7){ if (frame % 2) { for (let i = 0; i < W * H; i++) buf[i] = C.INK; } }
       else {
         drawPet(PET_X, PET_Y + ((frame % 4 < 2) ? 0 : 1));
         if (frame % 4 < 2){ blit(SPR.HEART, 2, 2); blit(SPR.HEART, 25, 3); }
@@ -1245,7 +1330,7 @@ function render(){
   else                              drawMain();
 
   /* 呼叫時整個畫面閃一下 */
-  if (flash > 0 && G.alive && !G.sleeping){ for (let i = 0; i < W * H; i++) buf[i] ^= 1; }
+  if (flash > 0 && G.alive && !G.sleeping){ for (let i = 0; i < W * H; i++) buf[i] = buf[i] ? 0 : C.INK; }
   paint();
 }
 
@@ -1401,6 +1486,16 @@ function updateSpeedSeg(){
   [...document.querySelectorAll('#speedSeg button')].forEach(b =>
     b.classList.toggle('on', Number(b.dataset.speed) === speed));
 }
+function updateNameplate(){
+  const el = document.getElementById('nameplate');
+  const n = String(G.name || '').trim();
+  el.textContent = n;
+  el.hidden = !n;
+}
+document.getElementById('nameInput').addEventListener('input', e => {
+  G.name = e.target.value;
+  updateNameplate(); save();
+});
 function updateSkinSeg(){
   [...document.querySelectorAll('#skinSeg button')].forEach(b =>
     b.classList.toggle('on', b.dataset.skin === skin));
@@ -1430,6 +1525,8 @@ load();
 applyShell();
 updateSpeedSeg();
 updateSkinSeg();
+document.getElementById('nameInput').value = G.name || '';
+updateNameplate();
 updateSoundBtn();
 readColors();
 fit();
