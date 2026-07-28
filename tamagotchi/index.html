@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>たまごっち — 電子雞經典復刻</title>
+<meta name="description" content="1996 年初代電子雞（Tamagotchi P1）的網頁完全復刻：32×16 點陣 LCD、三顆按鍵、八個圖示、餵食／燈光／遊戲／打針／清便／狀態／管教，完整的孵化・成長・進化・生病・死亡循環。">
+<meta name="theme-color" content="#1d2620">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%A5%9A%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#1b1e1a;
+    --bg2:#252a23;
+    --ink:#e8ece4;
+    --ink-dim:#9aa494;
+    --line:rgba(232,236,228,.14);
+
+    --lcd-bg:#9db08a;
+    --lcd-on:#20281c;
+    --lcd-off:rgba(32,40,28,.075);
+    --lcd-idle:rgba(32,40,28,.16);
+
+    --shell-a:#f2c94c;
+    --shell-b:#e08b2e;
+    --shell-c:#b5641c;
+
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:"Hiragino Sans","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{min-height:100%}
+  body{
+    background:
+      radial-gradient(1100px 620px at 50% -14%,#333a2f 0%,transparent 62%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.85;
+    -webkit-font-smoothing:antialiased;
+    -webkit-tap-highlight-color:transparent;
+    padding:34px 18px 72px;
+  }
+
+  .stage{
+    max-width:1000px;margin:0 auto;
+    display:grid;grid-template-columns:minmax(300px,360px) 1fr;
+    gap:52px;align-items:start;
+  }
+  @media (max-width:860px){
+    .stage{grid-template-columns:1fr;gap:38px;justify-items:center}
+    body{padding:22px 14px 56px}
+  }
+
+  /* ============================ 機身 ============================ */
+  .device{width:100%;max-width:360px;position:sticky;top:28px}
+  @media (max-width:860px){.device{position:static}}
+
+  .shell{
+    position:relative;
+    aspect-ratio:329/430;
+    border-radius:50% 50% 46% 46% / 56% 56% 44% 44%;
+    background:
+      radial-gradient(120% 90% at 30% 12%,rgba(255,255,255,.55),transparent 46%),
+      linear-gradient(158deg,var(--shell-a) 0%,var(--shell-b) 52%,var(--shell-c) 100%);
+    box-shadow:
+      inset 0 -16px 34px rgba(0,0,0,.32),
+      inset 0 12px 26px rgba(255,255,255,.34),
+      0 26px 54px rgba(0,0,0,.5),
+      0 3px 0 rgba(0,0,0,.28);
+    display:flex;flex-direction:column;align-items:center;
+    padding:19% 12% 6%;
+    transition:filter .35s ease;
+  }
+  .shell::after{ /* 吊環 */
+    content:"";position:absolute;top:-3.2%;left:50%;transform:translateX(-50%);
+    width:15%;aspect-ratio:1;border-radius:50%;
+    border:5px solid rgba(0,0,0,.24);
+    background:transparent;
+  }
+
+  .lcd{
+    width:100%;
+    background:var(--lcd-bg);
+    border-radius:10px;
+    padding:7px 8px;
+    box-shadow:
+      inset 0 3px 10px rgba(0,0,0,.44),
+      inset 0 -1px 0 rgba(255,255,255,.22),
+      0 2px 0 rgba(255,255,255,.28);
+    display:flex;flex-direction:column;gap:5px;
+    position:relative;overflow:hidden;
+  }
+  .lcd::after{ /* 玻璃反光 */
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(122deg,rgba(255,255,255,.17) 0 16%,transparent 34%);
+    mix-blend-mode:screen;
+  }
+
+  .iconrow{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+  .icon{
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    cursor:pointer;user-select:none;
+  }
+  .icon svg{width:100%;height:auto;max-width:26px;display:block;color:var(--lcd-idle)}
+  .icon.lit svg{color:var(--lcd-on)}
+  .icon .cursor{
+    width:0;height:0;opacity:0;
+    border-left:4px solid transparent;border-right:4px solid transparent;
+  }
+  .iconrow.top .cursor{border-top:5px solid var(--lcd-on)}
+  .iconrow.bottom .cursor{border-bottom:5px solid var(--lcd-on)}
+  .iconrow.bottom .icon{flex-direction:column-reverse}
+  .icon.sel .cursor{opacity:1}
+  .icon.sel svg{color:var(--lcd-on)}
+  .icon.blink svg{animation:blink .5s steps(1,end) infinite}
+  @keyframes blink{0%,49%{color:var(--lcd-on)}50%,100%{color:var(--lcd-idle)}}
+
+  canvas#screen{width:100%;height:auto;display:block;image-rendering:pixelated}
+
+  /* 名字貼紙：像當年大家在機身上貼的姓名標籤，任何文字都貼得上去 */
+  .nameplate{
+    margin-top:14px;max-width:74%;
+    padding:4px 12px;border-radius:3px;
+    background:linear-gradient(#fffdf4,#f0ead6);
+    box-shadow:0 1px 2px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.9);
+    color:#4a4433;font-size:12.5px;line-height:1.5;letter-spacing:.06em;
+    transform:rotate(-1.2deg);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .nameplate[hidden]{display:none}
+
+  .brand{
+    margin-top:auto;padding:9px 0 6px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.26em;
+    color:rgba(80,42,10,.62);text-transform:uppercase;
+    text-shadow:0 1px 0 rgba(255,255,255,.42);
+  }
+
+  .buttons{
+    width:82%;display:flex;justify-content:space-between;align-items:flex-end;
+    padding-bottom:4%;
+  }
+  .btn{
+    position:relative;width:23%;aspect-ratio:1;border:0;border-radius:50%;
+    background:
+      radial-gradient(120% 120% at 34% 26%,#fdfdfb,#e6e2d6 44%,#b9b3a3 100%);
+    box-shadow:
+      0 5px 0 rgba(0,0,0,.3),
+      inset 0 -3px 6px rgba(0,0,0,.24),
+      inset 0 3px 5px rgba(255,255,255,.9);
+    cursor:pointer;font-family:var(--mono);font-size:14px;font-weight:700;
+    color:#6e6960;transition:transform .06s ease,box-shadow .06s ease;
+    display:grid;place-items:center;
+  }
+  .btn:nth-child(2){transform:translateY(11%)}
+  .btn:active,.btn.press{transform:translateY(4px) scale(.97);box-shadow:0 1px 0 rgba(0,0,0,.3),inset 0 -1px 4px rgba(0,0,0,.26)}
+  .btn:nth-child(2):active,.btn:nth-child(2).press{transform:translateY(calc(11% + 4px)) scale(.97)}
+  .btn small{position:absolute;bottom:-22px;font-size:9.5px;letter-spacing:.12em;color:rgba(255,255,255,.62);white-space:nowrap;font-family:var(--sans)}
+
+  /* ============================ 側欄 ============================ */
+  .panel{padding-top:6px;max-width:520px}
+  .panel h1{
+    font-size:26px;line-height:1.4;font-weight:700;letter-spacing:.02em;margin-bottom:4px;
+  }
+  .panel h1 span{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.34em;
+    color:var(--ink-dim);text-transform:uppercase;font-weight:400;margin-bottom:9px}
+  .lede{color:var(--ink-dim);font-size:14.5px;margin-bottom:26px}
+
+  .block{border-top:1px solid var(--line);padding:18px 0}
+  .block h2{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--ink-dim);font-weight:500;margin-bottom:12px;
+  }
+  .rows{display:grid;gap:9px;font-size:14px}
+  .row{display:grid;grid-template-columns:76px 1fr;gap:14px;align-items:baseline}
+  .row b{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--ink);font-weight:600}
+  .row span{color:var(--ink-dim)}
+
+  .keys{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+  kbd{
+    font-family:var(--mono);font-size:10.5px;padding:3px 7px;border-radius:5px;
+    background:var(--bg2);border:1px solid var(--line);color:var(--ink-dim);
+  }
+
+  .controls{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg2)}
+  .seg button{
+    border:0;background:transparent;color:var(--ink-dim);cursor:pointer;
+    font-family:var(--mono);font-size:11px;letter-spacing:.08em;padding:7px 11px;
+    border-right:1px solid var(--line);transition:.16s;
+  }
+  .seg button:last-child{border-right:0}
+  .seg button.on{background:var(--ink);color:var(--bg)}
+  .seg button:hover:not(.on){color:var(--ink)}
+
+  .ghost{
+    border:1px solid var(--line);background:transparent;color:var(--ink-dim);
+    border-radius:8px;padding:7px 13px;cursor:pointer;
+    font-family:var(--mono);font-size:11px;letter-spacing:.08em;transition:.16s;
+  }
+  .ghost:hover{color:var(--ink);border-color:var(--ink-dim)}
+
+  .namefield{display:inline-flex;align-items:center;gap:10px}
+  .namefield span{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--ink-dim)}
+  .namefield input{
+    background:var(--bg2);border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);font-family:var(--sans);font-size:13px;padding:7px 11px;width:190px;
+  }
+  .namefield input::placeholder{color:var(--ink-dim);opacity:.7}
+  .namefield input:focus{outline:2px solid var(--ink-dim);outline-offset:1px}
+
+  .swatches{display:flex;gap:8px}
+  .sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;
+      box-shadow:inset 0 -3px 6px rgba(0,0,0,.3),inset 0 3px 5px rgba(255,255,255,.4)}
+  .sw.on{border-color:var(--ink)}
+
+  .note{font-size:12.5px;color:var(--ink-dim);margin-top:12px}
+  .note code{font-family:var(--mono);font-size:11.5px;color:var(--ink)}
+
+  details summary{cursor:pointer;color:var(--ink-dim);font-size:13px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"▸ ";font-family:var(--mono)}
+  details[open] summary::before{content:"▾ "}
+  details .rows{margin-top:12px}
+
+  .foot{margin-top:34px;font-size:12px;color:var(--ink-dim);border-top:1px solid var(--line);padding-top:16px}
+  .foot a{color:var(--ink-dim)}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- ======================= 機身 ======================= -->
+  <div class="device">
+    <div class="shell" id="shell">
+      <div class="lcd">
+        <div class="iconrow top" id="iconTop"></div>
+        <canvas id="screen" width="512" height="256" aria-label="電子雞畫面"></canvas>
+        <div class="iconrow bottom" id="iconBottom"></div>
+      </div>
+      <div class="nameplate" id="nameplate" hidden></div>
+      <div class="brand">Tamagotchi</div>
+      <div class="buttons">
+        <button class="btn" id="btnA" aria-label="A 選擇">A<small>選擇</small></button>
+        <button class="btn" id="btnB" aria-label="B 執行">B<small>執行</small></button>
+        <button class="btn" id="btnC" aria-label="C 取消">C<small>取消</small></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= 說明 ======================= -->
+  <aside class="panel">
+    <h1><span>Tamagotchi P1 · 1996</span>電子雞 · 經典復刻</h1>
+    <p class="lede">
+      32×16 點陣單色 LCD、三顆按鍵、八個圖示。孵化 → 幼年 → 少年 → 成年，
+      八種角色分支、便便、生病、管教、體重、睡眠與壽命，都照初代的規則跑。
+      進度會自動存在這台裝置上，關掉分頁牠也還在長大。
+    </p>
+
+    <div class="block">
+      <h2>操作</h2>
+      <div class="rows">
+        <div class="row"><b>A</b><span>移動圖示游標（也是小遊戲的「左」）</span></div>
+        <div class="row"><b>B</b><span>執行選中的圖示（也是小遊戲的「右」）</span></div>
+        <div class="row"><b>C</b><span>取消／離開（長按 C 三秒＝靜音切換）</span></div>
+      </div>
+      <div class="keys">
+        <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
+        <kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd>
+        <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd>
+        <kbd>螢幕上的圖示可直接點</kbd>
+      </div>
+    </div>
+
+    <div class="block">
+      <h2>八個圖示</h2>
+      <div class="rows">
+        <div class="row"><b>餵食</b><span>正餐補 1 顆肚子心、體重 +1；點心補 1 顆心情心、體重 +2。吃太多會胖到生病。</span></div>
+        <div class="row"><b>電燈</b><span>牠想睡時要幫牠關燈。開著燈不睡覺，心情會一直掉。</span></div>
+        <div class="row"><b>遊戲</b><span>猜左右，五戰決勝。贏多輸少 +1 顆心情心，每局消耗 1 體重。</span></div>
+        <div class="row"><b>打針</b><span>頭上冒骷髏就是生病了，要打針。一針不一定治得好。</span></div>
+        <div class="row"><b>馬桶</b><span>清掉便便。放著不清很快就會生病。</span></div>
+        <div class="row"><b>狀態</b><span>連按 B 翻頁：年齡體重 → 肚子 → 心情 → 管教度。</span></div>
+        <div class="row"><b>管教</b><span>牠沒事亂叫時罵牠，管教 +25%。真的餓了還罵牠，心情會掉。</span></div>
+        <div class="row"><b>呼叫</b><span>指示燈。牠在叫你的時候會閃，這個不能選。</span></div>
+      </div>
+    </div>
+
+    <div class="block">
+      <h2>設定</h2>
+      <div class="controls" style="margin-bottom:12px">
+        <label class="namefield">
+          <span>名字</span>
+          <input id="nameInput" type="text" maxlength="14" placeholder="還沒取名字" autocomplete="off">
+        </label>
+      </div>
+      <div class="controls" style="margin-bottom:12px">
+        <div class="seg" id="skinSeg">
+          <button data-skin="classic">經典生物</button>
+          <button data-skin="husband">丈夫</button>
+        </div>
+        <span class="note" style="margin:0">只換長相，養法完全一樣</span>
+      </div>
+      <div class="controls">
+        <div class="seg" id="speedSeg">
+          <button data-speed="1">×1 原版</button>
+          <button data-speed="10">×10</button>
+          <button data-speed="60">×60</button>
+        </div>
+        <button class="ghost" id="soundBtn">音效：開</button>
+        <button class="ghost" id="resetBtn">重新孵一顆蛋</button>
+      </div>
+      <div class="controls" style="margin-top:12px">
+        <div class="swatches" id="swatches"></div>
+      </div>
+      <p class="note">
+        <code>×1</code> 是 1996 年原版的真實時間：蛋 5 分鐘孵化、幼年期 1 小時、成年要 3 天、壽命約 20 天。
+        <code>×60</code>（預設）下 1 秒＝1 分鐘，一個「電子雞日」約 24 分鐘，一個下午就能養到成年。
+        切換速度不會重置牠的年齡。
+      </p>
+      <p class="note">
+        名字會貼在機身上，中文、emoji 都可以。LCD 的點陣字型只有英數，
+        所以<strong>取英文或數字名字時，狀態頁會多出一頁顯示名字</strong>；中文名字只會出現在機身貼紙上。
+        重新孵一顆蛋等於新的生命，名字不會繼承。
+      </p>
+      <p class="note">
+        關掉分頁牠一樣會餓、會大便、會變老，但<strong>離線期間一律以真實時間計算</strong>（不套用加速倍率，最多補 72 小時）——
+        不然在 ×60 下離開十分鐘，回來就只剩一座墳了。
+      </p>
+    </div>
+
+    <div class="block">
+      <details>
+        <summary>成長分支與死亡條件</summary>
+        <div class="rows">
+          <div class="row"><b>蛋</b><span>5 分鐘後孵化。</span></div>
+          <div class="row"><b>幼年</b><span>1 小時。照顧良好 → まるっち／男孩；疏忽 → とんがりっち／頑皮男孩。</span></div>
+          <div class="row"><b>少年</b><span>1 天後進化。照顧良好 → たまっち／少年；疏忽 → くちたまっち／叛逆少年。</span></div>
+          <div class="row"><b>成年</b><span>再 2 天。良好系 → まめっち／ぎんじろっち／ますくっち（丈夫外觀：理想丈夫／上班族／宅丈夫）；疏忽系 → くちぱっち／にょろっち／たらこっち（顧家丈夫／沙發馬鈴薯／中年發福）。分歧看這階段累積幾次「疏忽」。</span></div>
+          <div class="row"><b>隱藏</b><span>成年後活到 15 歲且總疏忽 ≤ 5 次 → おやじっち／老伴。</span></div>
+          <div class="row"><b>死亡</b><span>壽命到（照顧越差越短）、生病 12 小時不打針、或肚子與心情同時歸零連續 4 小時。</span></div>
+        </div>
+      </details>
+    </div>
+
+    <p class="foot">
+      非官方同人作品，向 1996 年 BANDAI / WiZ 的初代たまごっち 致敬。
+      Tamagotchi 為萬代之註冊商標。<a href="../">← 回到首頁</a>
+    </p>
+  </aside>
+</div>
+
+<script>
+"use strict";
+/* ==========================================================================
+   たまごっち P1 復刻
+   ========================================================================== */
+
+/* -------------------------------------------------------------- 點陣字型 */
+const FONT = {
+  'A':['###','#.#','###','#.#','#.#'], 'B':['##.','#.#','##.','#.#','##.'],
+  'C':['###','#..','#..','#..','###'], 'D':['##.','#.#','#.#','#.#','##.'],
+  'E':['###','#..','##.','#..','###'], 'F':['###','#..','##.','#..','#..'],
+  'G':['###','#..','#.#','#.#','###'], 'H':['#.#','#.#','###','#.#','#.#'],
+  'I':['###','.#.','.#.','.#.','###'], 'J':['..#','..#','..#','#.#','###'],
+  'K':['#.#','#.#','##.','#.#','#.#'], 'L':['#..','#..','#..','#..','###'],
+  'M':['#.#','###','###','#.#','#.#'], 'N':['#.#','###','###','###','#.#'],
+  'O':['###','#.#','#.#','#.#','###'], 'P':['###','#.#','###','#..','#..'],
+  'Q':['###','#.#','#.#','###','..#'], 'R':['###','#.#','##.','#.#','#.#'],
+  'S':['###','#..','###','..#','###'], 'T':['###','.#.','.#.','.#.','.#.'],
+  'U':['#.#','#.#','#.#','#.#','###'], 'V':['#.#','#.#','#.#','#.#','.#.'],
+  'W':['#.#','#.#','###','###','#.#'], 'X':['#.#','#.#','.#.','#.#','#.#'],
+  'Y':['#.#','#.#','###','.#.','.#.'], 'Z':['###','..#','.#.','#..','###'],
+  '0':['###','#.#','#.#','#.#','###'], '1':['.#.','##.','.#.','.#.','###'],
+  '2':['###','..#','###','#..','###'], '3':['###','..#','.##','..#','###'],
+  '4':['#.#','#.#','###','..#','..#'], '5':['###','#..','###','..#','###'],
+  '6':['###','#..','###','#.#','###'], '7':['###','..#','..#','..#','..#'],
+  '8':['###','#.#','###','#.#','###'], '9':['###','#.#','###','..#','###'],
+  ' ':['...','...','...','...','...'], '.':['...','...','...','...','.#.'],
+  ':':['...','.#.','...','.#.','...'], '%':['#.#','..#','.#.','#..','#.#'],
+  '!':['.#.','.#.','.#.','...','.#.'], '?':['###','..#','.##','...','.#.'],
+  '-':['...','...','###','...','...'], '+':['...','.#.','###','.#.','...'],
+};
+
+/* ---------------------------------------------------------------- 調色盤
+   全部刻意壓在比 LCD 底色（#9db08a）更深的範圍：這樣畫面讀起來還是「液晶上的
+   墨點」，只是墨水有了顏色，而不是變成一張貼上去的彩圖。 */
+const C = { INK:1, SKIN:2, HAIR:3, BLUE:4, RED:5, NAVY:6, GREEN:7, PINK:8, GOLD:9, GREY:10, POOP:11 };
+const PAL = [
+  null,        /* 0 = 不亮 */
+  '#20281c',   /* INK   —— 預設墨色，跟著 --lcd-on 走 */
+  '#7d5136',   /* SKIN  */
+  '#241a11',   /* HAIR  */
+  '#2f5480',   /* BLUE  */
+  '#83322c',   /* RED   */
+  '#1f2b38',   /* NAVY  */
+  '#3c6b3a',   /* GREEN */
+  '#8c4a63',   /* PINK  */
+  '#7d6320',   /* GOLD  */
+  '#59604f',   /* GREY  */
+  '#4a3a22',   /* POOP  */
+];
+
+/* ------------------------------------------------------------ 角色點陣圖
+   bands 決定每個像素用哪個顏色：[起始列, 結束列, 顏色, 起始欄?, 結束欄?]，
+   由前往後第一個命中的為準，都沒中就是 INK。 */
+const S = (rows, bands) => ({ w: rows[0].length, h: rows.length, rows, bands: bands || null });
+
+const SPR = {
+  /* 最寬處刻意壓在中線以下，才會是蛋形而不是圓形 */
+  EGG: S([
+    '......####......','....##....##....','...##......##...','..##........##..',
+    '..#..........#..','.##..........##.','.#............#.','.#............#.',
+    '#..............#','#..............#','#..............#','##............##',
+    '.#............#.','.##..........##.','..###......###..','....########....',
+  ]),
+  EGG_CRACK: S([
+    '......####......','....##....##....','...##......##...','..##........##..',
+    '..#..........#..','.##..........##.','.#............#.','.#............#.',
+    '#...#...#...#..#','#..#.#.#.#.#...#','#.....#...#....#','##............##',
+    '.#............#.','.##..........##.','..###......###..','....########....',
+  ]),
+
+  /* 角色一律 12×12：32 格寬的螢幕才留得下走動的空間（16 格寬會把畫面塞滿） */
+  BABY: S([
+    '............','.....##.....','....####....','...######...',
+    '..########..','..##.##.##..','..########..','..###..###..',
+    '...######...','....####....','............','............',
+  ], [[0,11,C.GREY]]),
+
+  MARUTCHI: S([
+    '....####....','..########..','.##########.','###.####.###',
+    '###.####.###','############','####....####','.##########.',
+    '..########..','...######...','...##..##...','..###..###..',
+  ], [[0,11,C.GREY]]),
+  TONGARITCHI: S([
+    '.....##.....','....####....','..########..','.##########.',
+    '###.####.###','###.####.###','############','####....####',
+    '.##########.','...######...','...##..##...','..###..###..',
+  ], [[0,11,C.GOLD]]),
+
+  /* 圓頂窄頭、下身較寬，跟まるっち 的等寬圓球區隔開；眼睛內縮才不會被身體邊緣吃掉 */
+  TAMATCHI: S([
+    '.....##.....','...######...','..########..','.##########.',
+    '.##.####.##.','.##########.','############','####....####',
+    '############','.##########.','...##..##...','..###..###..',
+  ], [[0,11,C.BLUE]]),
+  KUCHITAMATCHI: S([
+    '....####....','..########..','.##########.','##.######.##',
+    '##.######.##','############','###......###','.###.##.###.',
+    '..########..','...######...','...##..##...','..###..###..',
+  ], [[0,11,C.GREEN]]),
+
+  MAMETCHI: S([
+    '.#........#.','.#........#.','.##########.','###.####.###',
+    '###.####.###','############','####....####','.##########.',
+    '..########..','...######...','...##..##...','..###..###..',
+  ], [[0,1,C.GOLD],[2,11,C.BLUE]]),
+  /* 大眼睛往內移一格，外緣才留得住身體輪廓（貼邊會把牠切成星形） */
+  GINJIROTCHI: S([
+    '.....##.....','.....##.....','.##########.','###..##..###',
+    '###..##..###','############','####....####','.##########.',
+    '..########..','...######...','...##..##...','..###..###..',
+  ], [[0,1,C.GOLD],[2,11,C.GREY]]),
+  MASKUTCHI: S([
+    '....####....','..########..','.##########.','############',
+    '.#..#..#..#.','.#........#.','############','.###....###.',
+    '..########..','...######...','...##..##...','..###..###..',
+  ], [[4,5,C.RED],[0,11,C.NAVY]]),
+  KUCHIPATCHI: S([
+    '.#........#.','.##......##.','..########..','.##########.',
+    '##.######.##','##.######.##','############','..########..',
+    '.##########.','.###....###.','.##########.','..##....##..',
+  ], [[9,11,C.GOLD],[0,11,C.GREEN]]),
+  /* 蛇頭置中、身體往下收成盤起來的底座（原本整隻偏左，站位看起來會歪） */
+  NYOROTCHI: S([
+    '....####....','..########..','..##.##.##..','..########..',
+    '..##....##..','..########..','...######...','....####....',
+    '.....###....','....#####...','..#########.','.##########.',
+  ], [[0,7,C.PINK],[8,11,C.NAVY]]),
+  TARAKOTCHI: S([
+    '............','....####....','..########..','.##########.',
+    '####.##.####','############','.###....###.','.##########.',
+    '..########..','...######...','...##..##...','..###..###..',
+  ], [[0,11,C.PINK]]),
+  /* 鬍子畫成兩側外翻的凹口 + 下方嘴巴；原本四個分散的洞只會看起來像雜訊 */
+  OYAJITCHI: S([
+    '....####....','..########..','.##########.','############',
+    '###.####.###','############','#..######..#','.###....###.',
+    '.##########.','...######...','...##..##...','..###..###..',
+  ], [[6,6,C.GREY],[0,7,C.SKIN],[8,11,C.NAVY]]),
+
+  GHOST: S([
+    '....####....','..########..','.##########.','##.######.##',
+    '##.######.##','############','.###....###.','############',
+    '############','############','############','##.##.##.##.',
+  ], [[0,11,C.GREY]]),
+  GRAVE: S([
+    '..########..','.##########.','############','#####..#####',
+    '#####..#####','###......###','###......###','#####..#####',
+    '#####..#####','############','############','############',
+  ], [[0,11,C.GREY]]),
+  /* 躺著（睡覺／臨終）—— 內容壓在下半部，畫在 PET_Y 時剛好貼著地面 */
+  LYING: S([
+    '............','............','............','............',
+    '............','...######...','.##########.','############',
+    '##..####..##','############','.##########.','...######...',
+  ]),
+
+  POOP: S(['..##..','.####.','..##..','.####.','######','######'], [[0,5,C.POOP]]),
+  SKULL: S(['.####.','######','#.##.#','######','.####.','.#..#.']),
+  HEART: S(['.#.#.','#####','#####','.###.','..#..'], [[0,4,C.RED]]),
+  HEART_E: S(['.#.#.','#.#.#','#...#','.#.#.','..#..']),
+  MEAL: S([
+    '...####...','..######..','.########.','..........',
+    '##########','.########.','..######..','...####...',
+  ], [[0,2,C.RED],[3,7,C.INK]]),
+  SNACK: S([
+    '..######..','.########.','.########.','..######..',
+    '....##....','....##....','....##....','....##....',
+  ], [[0,3,C.PINK],[4,7,C.INK]]),
+  ARROW: S(['...#...','..##...','.###...','#######','.###...','..##...','...#...']),
+  SYRINGE: S([
+    '........##','.......###','..######..','.########.','..######..','#.........',
+  ]),
+  ANGRY: S(['#...#','.#.#.','..#..','.#.#.','#...#']),
+  CURSOR: S(['#..','##.','###','##.','#..']),
+};
+
+/* ------------------------------------------------------- 「丈夫」外觀點陣圖
+   沿用完全相同的角色代號，只是把生物換成人類男性的成長線，所以進化條件、
+   分支判斷、壽命這些遊戲規則一行都不用改。沒定義的代號會自動退回經典版。 */
+const SKIN_HUSBAND = {
+  /* 嬰兒：大頭小身體 */
+  BABY: S([
+    '............','............','....####....','...######...',
+    '...#.##.#...','...######...','....####....','...######...',
+    '..########..','..########..','...##..##...','............',
+  ], [[2,6,C.SKIN],[7,11,C.BLUE]]),
+  /* 男孩（照顧良好）：整齊的瀏海 */
+  MARUTCHI: S([
+    '...######...','..########..','...######...','...#.##.#...',
+    '...######...','....####....','..########..','.##########.',
+    '..########..','..########..','..###..###..','..###..###..',
+  ], [[0,1,C.HAIR],[2,5,C.SKIN],[6,9,C.BLUE],[10,11,C.NAVY]]),
+  /* 頑皮男孩（疏忽）：亂翹的頭髮 */
+  TONGARITCHI: S([
+    '..#..##..#..','..########..','...######...','...#.##.#...',
+    '...######...','....####....','..########..','.##########.',
+    '..########..','..########..','..###..###..','..###..###..',
+  ], [[0,1,C.HAIR],[2,5,C.SKIN],[6,9,C.GREEN],[10,11,C.NAVY]]),
+  /* 少年（照顧良好）：側分、抽高 */
+  TAMATCHI: S([
+    '..#########.','..########..','...#.##.#...','...######...',
+    '....####....','.....##.....','..########..','.##########.',
+    '.##########.','..########..','..###..###..','..###..###..',
+  ], [[0,1,C.HAIR],[2,5,C.SKIN],[6,9,C.BLUE],[10,11,C.NAVY]]),
+  /* 叛逆少年（疏忽）：連帽外套 */
+  KUCHITAMATCHI: S([
+    '..########..','.##########.','.##.####.##.','.##.#..#.##.',
+    '.##.####.##.','..########..','..########..','.##########.',
+    '.##########.','..########..','..###..###..','..###..###..',
+  ], [[2,4,C.SKIN,4,7],[0,9,C.NAVY],[10,11,C.NAVY]]),
+  /* 理想丈夫：襯衫敞開的領口 */
+  MAMETCHI: S([
+    '...######...','..########..','...#.##.#...','...######...',
+    '....####....','.....##.....','..###..###..','.##########.',
+    '.##########.','..########..','..###..###..','..###..###..',
+  ], [[0,1,C.HAIR],[2,5,C.SKIN],[7,9,C.RED,5,6],[6,9,C.BLUE],[10,11,C.NAVY]]),
+  /* 上班族丈夫：右手提著公事包 */
+  GINJIROTCHI: S([
+    '...#####....','..######....','..#.##.#....','..######....',
+    '...####.....','....##......','.###..###...','.########...',
+    '.######..###','.######..###','..##..##....','..##..##....',
+  ], [[0,1,C.HAIR],[2,5,C.SKIN],[8,9,C.GOLD,9,11],[6,11,C.NAVY]]),
+  /* 宅丈夫：戴著耳機 */
+  MASKUTCHI: S([
+    '.#........#.','.##########.','.##.####.##.','.##.#..#.##.',
+    '.##.####.##.','....####....','.....##.....','..########..',
+    '.##########.','..########..','..###..###..','..###..###..',
+  ], [[2,4,C.SKIN,4,7],[5,6,C.SKIN],[0,4,C.INK],[7,9,C.GREEN],[10,11,C.NAVY]]),
+  /* 顧家丈夫：圍裙一路蓋到腳 */
+  KUCHIPATCHI: S([
+    '...######...','..########..','...#.##.#...','...######...',
+    '....####....','.....##.....','..########..','.##########.',
+    '.#.######.#.','..########..','..########..','..########..',
+  ], [[0,1,C.HAIR],[2,5,C.SKIN],[6,7,C.GREEN],[8,11,C.RED]]),
+  /* 沙發馬鈴薯丈夫：整個癱下去 */
+  NYOROTCHI: S([
+    '............','............','....####....','...######...',
+    '...#.##.#...','...######...','..########..','.##########.',
+    '############','############','.##########.','..##....##..',
+  ], [[2,5,C.SKIN],[6,10,C.GOLD],[11,11,C.NAVY]]),
+  /* 中年發福丈夫：肚子最寬 */
+  TARAKOTCHI: S([
+    '....####....','...######...','...#.##.#...','...######...',
+    '....####....','.....##.....','..########..','.##########.',
+    '############','############','.##########.','..###..###..',
+  ], [[0,0,C.HAIR],[1,5,C.SKIN],[6,10,C.PINK],[11,11,C.NAVY]]),
+  /* 老伴：禿頭配八字鬍 */
+  OYAJITCHI: S([
+    '....####....','...######...','...#.##.#...','...######...',
+    '..#.####.#..','....####....','.....##.....','..########..',
+    '.##########.','..########..','..###..###..','..###..###..',
+  ], [[4,4,C.GREY],[0,6,C.SKIN],[7,9,C.GREEN],[10,11,C.NAVY]]),
+  /* 睡著：側躺，頭在左邊、閉著眼 */
+  LYING: S([
+    '............','............','............','............',
+    '............','............','............','..####......',
+    '.######.....','.##..##.....','.###########','..#########.',
+  ], [[7,9,C.SKIN],[10,11,C.BLUE]]),
+};
+/* 幽靈和墓碑兩種外觀共用，直接退回經典版 */
+const SKINS = { classic: null, husband: SKIN_HUSBAND };
+
+/* --------------------------------------------------------------- 圖示點陣 */
+const ICON_ART = {
+  food:  ['............','....####....','...######...','..########..','............',
+          '############','.##########.','..########..','...######...','....####....'],
+  light: ['.#........#.','..#..##..#..','....####....','...######...','...######...',
+          '...######...','....####....','.....##.....','....####....','.....##.....'],
+  game:  ['.....##.....','....####....','.....##.....','.....##.....','..########..',
+          '.##########.','############','.##########.','..########..','............'],
+  med:   ['............','....####....','############','#####..#####','###......###',
+          '###......###','#####..#####','#####..#####','############','............'],
+  wc:    ['............','..#######...','..#.....#...','..#######...','...#####....',
+          '....###.....','....###.....','...#####....','..#######...','............'],
+  meter: ['............','............','.........###','.........###','.....###.###',
+          '.....###.###','.###.###.###','.###.###.###','.###.###.###','############'],
+  disc:  ['............','.....##.....','.....##.....','....####....','....####....',
+          '....####....','....####....','............','....####....','............'],
+  call:  ['.....##.....','....####....','...######...','...######...','..########..',
+          '..########..','.##########.','############','.....##.....','............'],
+};
+const ICONS = [
+  {k:'food', label:'餵食'}, {k:'light',label:'電燈'}, {k:'game', label:'遊戲'}, {k:'med',  label:'打針'},
+  {k:'wc',   label:'馬桶'}, {k:'meter',label:'狀態'}, {k:'disc', label:'管教'}, {k:'call', label:'呼叫'},
+];
+const SELECTABLE = 7;               /* 第 8 個「呼叫」只是指示燈，不能選 */
+
+/* ============================================================== 螢幕繪製 */
+const W = 32, H = 16;
+const buf = new Uint8Array(W * H);
+const cv  = document.getElementById('screen');
+const cx  = cv.getContext('2d');
+
+const clear = () => buf.fill(0);
+function put(x, y, v = 1){
+  x |= 0; y |= 0;
+  if (x >= 0 && x < W && y >= 0 && y < H) buf[y * W + x] = v;
+}
+function bandColor(sp, y, x){
+  if (!sp.bands) return C.INK;
+  for (const [y0, y1, c, x0, x1] of sp.bands){
+    if (y < y0 || y > y1) continue;
+    if (x0 !== undefined && (x < x0 || x > x1)) continue;
+    return c;
+  }
+  return C.INK;
+}
+function blit(sp, ox, oy, opt){
+  opt = opt || {};
+  const {flip = false, rowFrom = 0, rowTo = 1e9, color = 0} = opt;
+  for (let y = 0; y < sp.h; y++){
+    if (y < rowFrom || y > rowTo) continue;
+    const row = sp.rows[y];
+    for (let x = 0; x < sp.w; x++){
+      if (row[x] !== '#') continue;
+      /* bands 以未翻轉的座標判定，翻轉只影響畫到哪 */
+      put(ox + (flip ? sp.w - 1 - x : x), oy + y, color || bandColor(sp, y, x));
+    }
+  }
+}
+function textAt(str, ox, oy){
+  str = String(str).toUpperCase();
+  for (let i = 0; i < str.length; i++){
+    const g = FONT[str[i]] || FONT[' '];
+    for (let y = 0; y < 5; y++)
+      for (let x = 0; x < 3; x++)
+        if (g[y][x] === '#') put(ox + i * 4 + x, oy + y);
+  }
+}
+const textW = s => s.length * 4 - 1;
+const textC = (s, y) => textAt(s, Math.round((W - textW(String(s))) / 2), y);
+
+/* 把 32×16 邏輯畫面畫到 canvas */
+let cell = 16, pad = 0;
+function fit(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  const cssW = cv.clientWidth || 320;
+  cell = Math.max(4, Math.floor((cssW * dpr) / W));
+  cv.width  = cell * W;
+  cv.height = cell * H;
+  paint();
+}
+let COL_ON = '#20281c', COL_OFF = 'rgba(32,40,28,.075)';
+function readColors(){
+  const cs = getComputedStyle(document.documentElement);
+  COL_ON  = cs.getPropertyValue("--lcd-on").trim()  || COL_ON;
+  PAL[C.INK] = COL_ON;
+  COL_OFF = cs.getPropertyValue('--lcd-off').trim() || COL_OFF;
+}
+function paint(){
+  const dot = Math.max(1, cell - Math.max(1, Math.round(cell * 0.14)));
+  const off = Math.floor((cell - dot) / 2);
+  cx.clearRect(0, 0, cv.width, cv.height);
+  const dim = COL_OFF;
+  for (let y = 0; y < H; y++){
+    for (let x = 0; x < W; x++){
+      const v = buf[y * W + x];
+      cx.fillStyle = v ? (PAL[v] || COL_ON) : dim;
+      cx.fillRect(x * cell + off, y * cell + off, dot, dot);
+    }
+  }
+}
+
+/* ================================================================== 音效 */
+let actx = null, soundOn = true;
+function ac(){
+  if (!actx){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) actx = new AC();
+  }
+  if (actx && actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function tone(freq, dur, at, vol){
+  const a = ac(); if (!a || !soundOn || !freq) return;
+  const t0 = a.currentTime + (at || 0);
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = 'square'; o.frequency.value = freq;
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(vol == null ? 0.055 : vol, t0 + 0.006);
+  g.gain.setValueAtTime(vol == null ? 0.055 : vol, t0 + dur - 0.012);
+  g.gain.linearRampToValueAtTime(0, t0 + dur);
+  o.connect(g); g.connect(a.destination);
+  o.start(t0); o.stop(t0 + dur + 0.02);
+}
+function seq(notes){ let t = 0; for (const [f, d] of notes){ tone(f, d, t); t += d; } }
+const SFX = {
+  click : () => tone(1046, .035),
+  ok    : () => seq([[988,.05],[1319,.09]]),
+  no    : () => seq([[330,.09],[247,.14]]),
+  eat   : () => seq([[784,.05],[0,.03],[784,.05],[0,.03],[988,.08]]),
+  call  : () => seq([[1319,.08],[0,.05],[1319,.08],[0,.05],[1319,.08]]),
+  win   : () => seq([[784,.07],[988,.07],[1319,.16]]),
+  lose  : () => seq([[392,.1],[294,.18]]),
+  hatch : () => seq([[523,.09],[659,.09],[784,.09],[1047,.22]]),
+  evolve: () => seq([[523,.07],[659,.07],[784,.07],[1047,.07],[1319,.2]]),
+  flush : () => seq([[600,.05],[500,.05],[400,.05],[300,.09]]),
+  shot  : () => seq([[1200,.05],[900,.12]]),
+  scold : () => seq([[220,.09],[0,.04],[220,.09]]),
+  die   : () => seq([[523,.25],[440,.25],[349,.3],[262,.6]]),
+};
+
+/* ================================================================ 遊戲狀態 */
+const SAVE_KEY = 'tamagotchi-p1.v1';
+
+const STAGE_MIN = { EGG:5, BABY:60, CHILD:1440, TEEN:2880 };  /* 停留在該階段的遊戲分鐘 */
+const BASE_WEIGHT = { EGG:5, BABY:5, CHILD:10, TEEN:15, ADULT:20 };
+const DRAIN = {                                                /* 幾遊戲分鐘掉一顆心 */
+  BABY:{hunger:12, happy:15}, CHILD:{hunger:28, happy:32},
+  TEEN:{hunger:36, happy:40}, ADULT:{hunger:45, happy:50},
+};
+const BEDTIME = { BABY:[20,8], CHILD:[21,9], TEEN:[22,10], ADULT:[22,10] };
+
+const NAMES = {
+  EGG:'EGG', BABY:'BABY', MARUTCHI:'MARU', TONGARITCHI:'TONGARI',
+  TAMATCHI:'TAMA', KUCHITAMATCHI:'KUCHITAMA', MAMETCHI:'MAME',
+  GINJIROTCHI:'GINJIRO', MASKUTCHI:'MASKU', KUCHIPATCHI:'KUCHIPA',
+  NYOROTCHI:'NYORO', TARAKOTCHI:'TARAKO', OYAJITCHI:'OYAJI',
+};
+
+/* 初代是開機時自己設定時間，所以牠的作息跟你的一致。這裡沿用真實時間，
+   但如果你是在深夜開始的，就把虛擬時鐘撥到早上九點 —— 否則蛋一孵出來就躺著睡，
+   什麼都不能做。 */
+function birthClock(){
+  const now = new Date();
+  const h = now.getHours();
+  if (h >= 20 || h < 9){
+    const d = new Date(now); d.setHours(9, 0, 0, 0);
+    return d.getTime();
+  }
+  return now.getTime();
+}
+
+let G;
+function freshGame(){
+  return {
+    v: 1,
+    name: '',
+    stage: 'EGG', char: 'EGG',
+    bornWall: birthClock(),    /* 虛擬時鐘的原點，用來推算「現在幾點」 */
+    gtMin: 0,                  /* 累積遊戲分鐘 */
+    stageMin: 0,
+    hunger: 4, happy: 4, discipline: 0,
+    weight: 5,
+    poop: 0, sick: 0, sickMin: 0,
+    sleeping: false, lightOn: true,
+    calling: false, callMin: 0, callSpoiled: false,
+    neglectMin: 0,
+    careMiss: 0, stageMiss: 0,
+    alive: true, deadAt: 0, deathAge: 0,
+    tHunger: 0, tHappy: 0, tPoop: 90, tSpoil: 200,
+    lastReal: Date.now(),
+  };
+}
+
+/* UI 狀態（不存檔） */
+let sel = -1;                 /* 圖示游標，-1 = 沒選 */
+let mode = 'main';            /* main | foodmenu | stats | game | fx */
+let foodPick = 0;             /* 0 正餐 / 1 點心 */
+let statPage = 0;
+let fx = null;                /* {type, t, dur, data} */
+let mini = null;              /* 猜左右小遊戲 */
+let speed = 60;
+let skin = 'classic';         /* classic | husband —— 只換長相，規則完全相同 */
+let frame = 0;                /* 動畫影格計數 */
+let flash = 0;                /* 呼叫時的螢幕閃爍 */
+
+/* 角色尺寸與站位：12 格寬置中、貼著畫面底部 */
+const PET_W = 12, PET_X = 10, PET_Y = 3;
+let walkX = PET_X, walkDir = 1, walkPause = 0, walkTick = 0;
+
+/* ---------------------------------------------------------------- 存 / 讀 */
+function save(){
+  try{
+    G.lastReal = Date.now();
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ g: G, speed, soundOn, shell: shellIdx, skin }));
+  }catch(e){}
+}
+function load(){
+  let raw = null;
+  try{ raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); }catch(e){}
+  if (raw && raw.g && raw.g.v === 1){
+    G = Object.assign(freshGame(), raw.g);
+    speed = raw.speed || 60;
+    soundOn = raw.soundOn !== false;
+    shellIdx = raw.shell || 0;
+    skin = SKINS[raw.skin] !== undefined ? raw.skin : 'classic';
+    catchUpSince(G.lastReal || Date.now());
+  } else {
+    G = freshGame();
+  }
+}
+/* 沒在看著螢幕的時候（關分頁、切到背景）一律以真實時間 ×1 推進，加速倍率只在
+   你盯著牠的時候生效 —— 否則在 ×60 下離開十分鐘回來就是一座墳。上限 72 遊戲小時。 */
+function catchUpSince(lastRealMs){
+  const away = Math.max(0, Date.now() - lastRealMs);
+  let n = Math.floor(Math.min(72 * 60, away / 60000));
+  /* gtMin 要跟著一起走，tickMinute 內的虛擬時鐘（睡眠時段）才會正確 */
+  while (n-- > 0 && G.alive){ G.gtMin += 1; tickMinute(true); }
+  G.lastReal = Date.now();
+}
+
+/* ------------------------------------------------------------- 時間 / 判斷 */
+const vNow    = () => new Date(G.bornWall + G.gtMin * 60000);
+const ageDays = () => Math.floor(G.gtMin / 1440);
+const isEgg   = () => G.stage === 'EGG';
+const bedFor  = () => BEDTIME[G.stage] || BEDTIME.ADULT;
+function shouldSleep(){
+  if (isEgg() || !G.alive) return false;
+  const [b, w] = bedFor();
+  const h = vNow().getHours();
+  return b > w ? (h >= b || h < w) : (h >= b && h < w);
+}
+function lifespanDays(){ return Math.max(6, 20 - Math.min(12, G.careMiss)); }
+
+/* ------------------------------------------------------------ 每遊戲分鐘 */
+function tickMinute(silent){
+  if (!G.alive) return;
+  G.stageMin++;
+
+  /* --- 睡眠 --- */
+  const wantSleep = shouldSleep();
+  if (wantSleep && !G.sleeping){ G.sleeping = true; G.calling = false; }
+  if (!wantSleep && G.sleeping){ G.sleeping = false; G.lightOn = true; }
+
+  if (G.sleeping){
+    /* 該睡了還不關燈 → 心情下滑、容易累出病 */
+    if (G.lightOn){
+      if (G.stageMin % 20 === 0 && G.happy > 0) G.happy--;
+      if (Math.random() < 0.0012) getSick();
+    }
+    /* 睡覺時肚子餓得慢，也不會大便 */
+    if (++G.tHunger >= (DRAIN[G.stage] || DRAIN.ADULT).hunger * 3){
+      G.tHunger = 0; if (G.hunger > 0) G.hunger--;
+    }
+  } else {
+    const d = DRAIN[G.stage] || DRAIN.ADULT;
+    if (!isEgg()){
+      if (++G.tHunger >= d.hunger){ G.tHunger = 0; if (G.hunger > 0) G.hunger--; }
+      if (++G.tHappy  >= d.happy ){ G.tHappy  = 0; if (G.happy  > 0) G.happy--;  }
+      if (--G.tPoop <= 0){
+        G.tPoop = Math.round((60 + Math.random() * 120) * (G.stage === 'BABY' ? .5 : 1));
+        if (G.poop < 4){ G.poop++; if (G.weight > BASE_WEIGHT[G.stage]) G.weight--; }
+      }
+      /* 偶爾無理取鬧，這時候要「管教」 */
+      if (--G.tSpoil <= 0 && G.hunger > 1 && G.happy > 1 && !G.sick){
+        G.tSpoil = 180 + Math.floor(Math.random() * 240);
+        G.calling = true; G.callSpoiled = true; G.callMin = 0;
+      }
+    }
+  }
+
+  /* --- 呼叫 / 疏忽 --- */
+  if (!isEgg() && !G.sleeping){
+    const needs = G.hunger === 0 || G.happy === 0 || G.sick > 0;
+    if (needs && !G.calling){ G.calling = true; G.callSpoiled = false; G.callMin = 0; }
+    if (G.calling){
+      if (++G.callMin >= 20){
+        G.careMiss++; G.stageMiss++; G.callMin = 0;
+        if (Math.random() < 0.25) getSick();
+        if (!needs && G.callSpoiled) G.calling = false;   /* 亂叫沒人理，牠自己安靜 */
+      }
+      if (!needs && !G.callSpoiled) G.calling = false;
+    }
+    if (G.hunger === 0 && G.happy === 0) G.neglectMin++; else G.neglectMin = 0;
+  }
+
+  /* --- 生病 --- */
+  if (!isEgg()){
+    if (G.poop > 0 && Math.random() < 0.0016 * G.poop) getSick();
+    if (G.weight > BASE_WEIGHT[G.stage] + 25 && Math.random() < 0.0011) getSick();
+    if (Math.random() < 0.00018) getSick();
+    if (G.sick > 0) G.sickMin++; else G.sickMin = 0;
+  }
+
+  /* --- 進化 --- */
+  const need = STAGE_MIN[G.stage];
+  if (need && G.stageMin >= need) evolve(silent);
+  else if (G.stage === 'ADULT' && G.char !== 'OYAJITCHI'
+           && ageDays() >= 15 && G.careMiss <= 5){
+    G.char = 'OYAJITCHI'; G.stageMin = 0;
+    if (!silent) startFx('evolve', 2200);
+  }
+
+  /* --- 死亡 --- */
+  let cause = 0;
+  if (G.sick > 0 && G.sickMin > 720) cause = 1;
+  else if (G.neglectMin > 240) cause = 2;
+  else if (!isEgg() && ageDays() >= lifespanDays()) cause = 3;
+  if (cause) die(silent);
+}
+
+function getSick(){ if (!G.sick){ G.sick = 1; G.calling = true; G.callSpoiled = false; G.callMin = 0; } }
+
+function evolve(silent){
+  const m = G.stageMiss;
+  if (G.stage === 'EGG'){
+    G.stage = 'BABY'; G.char = 'BABY'; G.weight = 5;
+    if (!silent){ SFX.hatch(); startFx('hatch', 2000); }
+  } else if (G.stage === 'BABY'){
+    G.stage = 'CHILD';
+    G.char  = m <= 1 ? 'MARUTCHI' : 'TONGARITCHI';
+    if (!silent) startFx('evolve', 2200);
+  } else if (G.stage === 'CHILD'){
+    G.stage = 'TEEN';
+    G.char  = (m <= 2 && G.char === 'MARUTCHI') ? 'TAMATCHI' : 'KUCHITAMATCHI';
+    if (!silent) startFx('evolve', 2200);
+  } else if (G.stage === 'TEEN'){
+    const good = G.char === 'TAMATCHI';
+    G.stage = 'ADULT';
+    G.char  = good ? (m <= 1 ? 'MAMETCHI'   : m <= 3 ? 'GINJIROTCHI' : 'MASKUTCHI')
+                   : (m <= 1 ? 'KUCHIPATCHI': m <= 3 ? 'NYOROTCHI'   : 'TARAKOTCHI');
+    if (!silent) startFx('evolve', 2200);
+  } else return;
+  G.stageMin = 0; G.stageMiss = 0;
+  G.weight = Math.max(G.weight, BASE_WEIGHT[G.stage]);
+  resetWalk();
+}
+
+function die(silent){
+  G.alive = false; G.deadAt = Date.now(); G.deathAge = ageDays();
+  G.calling = false; mode = 'main'; sel = -1;
+  if (!silent){ SFX.die(); startFx('death', 6000); }
+  save();
+}
+
+/* ------------------------------------------------------------------ 動畫 */
+function startFx(type, dur, data){ fx = { type, t: 0, dur, data: data || {} }; mode = 'fx'; }
+function endFx(){ fx = null; mode = 'main'; }
+
+/* ============================================================== 圖示操作 */
+function act(i){
+  if (!G.alive){ hatchNew(); return; }
+  if (isEgg()){ SFX.no(); return; }
+
+  switch (i){
+    case 0:                                            /* 餵食 */
+      if (G.sleeping){ SFX.no(); return; }
+      mode = 'foodmenu'; foodPick = 0; SFX.click(); break;
+
+    case 1:                                            /* 電燈 */
+      G.lightOn = !G.lightOn; SFX.ok(); break;
+
+    case 2:                                            /* 遊戲 */
+      if (G.sleeping || G.sick){ SFX.no(); return; }
+      mini = { round: 0, win: 0, lose: 0, phase: 'ask', t: 0, guess: 0, face: 0 };
+      mode = 'game'; SFX.ok(); break;
+
+    case 3:                                            /* 打針 */
+      if (!G.sick){ SFX.no(); startFx('refuse', 900); return; }
+      SFX.shot(); startFx('med', 1600); break;
+
+    case 4:                                            /* 馬桶 */
+      if (!G.poop){ SFX.no(); startFx('refuse', 900); return; }
+      SFX.flush(); startFx('flush', 1400); break;
+
+    case 5:                                            /* 狀態 */
+      mode = 'stats'; statPage = 0; SFX.click(); break;
+
+    case 6: {                                          /* 管教 */
+      if (G.sleeping){ SFX.no(); return; }
+      SFX.scold();
+      if (G.calling && G.callSpoiled){
+        G.discipline = Math.min(100, G.discipline + 25);
+        G.calling = false;
+        startFx('scold', 1400, { good: true });
+      } else {
+        if (G.happy > 0) G.happy--;
+        startFx('scold', 1400, { good: false });
+      }
+      break;
+    }
+  }
+  save();
+}
+
+function feed(kind){
+  if (kind === 0){                                     /* 正餐 */
+    if (G.hunger >= 4){ SFX.no(); startFx('refuse', 900); return; }
+    G.hunger++; G.weight++;
+  } else {                                             /* 點心 */
+    if (G.happy >= 4){ SFX.no(); startFx('refuse', 900); return; }
+    G.happy++; G.weight += 2;
+  }
+  G.calling = G.calling && (G.hunger === 0 || G.happy === 0 || G.sick > 0);
+  SFX.eat();
+  startFx('eat', 2000, { kind });
+  save();
+}
+
+function hatchNew(){
+  G = freshGame(); sel = -1; mode = 'main'; fx = null; mini = null;
+  resetWalk();
+  /* 新的一顆蛋是新的生命，名字不繼承 */
+  document.getElementById('nameInput').value = '';
+  updateNameplate();
+  SFX.ok(); save();
+}
+
+/* ================================================================ 按鍵處理 */
+function pressA(){
+  if (!G.alive){ hatchNew(); return; }
+  if (mode === 'fx'){ return; }
+  if (mode === 'foodmenu'){ foodPick ^= 1; SFX.click(); return; }
+  if (mode === 'stats'){ statPage = (statPage + 1) % statPages(); SFX.click(); return; }
+  if (mode === 'game'){ if (mini && mini.phase === 'ask') guess(0); return; }
+  sel = sel >= SELECTABLE - 1 ? -1 : sel + 1;
+  SFX.click(); syncIcons();
+}
+function pressB(){
+  if (!G.alive){ hatchNew(); return; }
+  if (mode === 'fx'){ return; }
+  /* 先離開選單再餵，否則 feed() 起的動畫會被蓋掉 */
+  if (mode === 'foodmenu'){ mode = 'main'; feed(foodPick); return; }
+  if (mode === 'stats'){ statPage = (statPage + 1) % statPages(); SFX.click(); return; }
+  if (mode === 'game'){ if (mini && mini.phase === 'ask') guess(1); return; }
+  if (isEgg()){ SFX.no(); return; }
+  if (sel >= 0) act(sel);
+  else SFX.no();
+}
+function pressC(){
+  if (!G.alive){ hatchNew(); return; }
+  if (mode === 'fx'){ return; }
+  if (mode === 'game'){ endMini(); return; }
+  if (mode !== 'main'){ mode = 'main'; SFX.click(); return; }
+  if (sel >= 0){ sel = -1; SFX.click(); syncIcons(); }
+}
+
+/* --------------------------------------------------------- 猜左右小遊戲 */
+function guess(dir){
+  mini.guess = dir;
+  mini.face  = Math.random() < 0.5 ? 0 : 1;
+  mini.phase = 'reveal'; mini.t = 0;
+  if (mini.guess === mini.face){ mini.win++;  SFX.win(); }
+  else                         { mini.lose++; SFX.lose(); }
+  if (G.weight > BASE_WEIGHT[G.stage]) G.weight--;
+}
+function endMini(){
+  if (mini && mini.win > mini.lose){
+    if (G.happy < 4) G.happy++;
+    G.calling = G.calling && (G.hunger === 0 || G.happy === 0 || G.sick > 0);
+  }
+  mini = null; mode = 'main'; sel = -1; syncIcons(); save();
+}
+function stepMini(dt){
+  if (!mini) return;
+  mini.t += dt;
+  if (mini.phase === 'reveal' && mini.t > 900){
+    mini.round++;
+    if (mini.round >= 5){ mini.phase = 'result'; mini.t = 0; }
+    else { mini.phase = 'ask'; mini.t = 0; }
+  } else if (mini.phase === 'result' && mini.t > 2200){
+    endMini();
+  }
+}
+
+/* ================================================================== 繪製 */
+/* 螢幕上最多畫兩坨（左右各一），G.poop 內部仍會累積到 4 影響生病機率 —— 再多畫
+   就會撞到左上角的骷髏圖示。 */
+function drawPoop(){
+  if (G.poop > 0) blit(SPR.POOP, 1, 10);
+  if (G.poop > 1) blit(SPR.POOP, 25, 10);
+}
+/* 依目前外觀取圖；該外觀沒定義的代號自動退回經典版 */
+function skinSpr(name){
+  const t = SKINS[skin];
+  return (t && t[name]) || SPR[name];
+}
+function petSprite(){ return skinSpr(G.char) || skinSpr('MARUTCHI'); }
+
+/* 沒事的時候在畫面上晃來晃去。有便便就縮小可走的範圍（繞開它），
+   睡著、生病、還是蛋、或正在操作選單時就站著不動。 */
+function walkBounds(){
+  return { lo: G.poop > 0 ? 8 : 0, hi: (G.poop > 1 ? 24 : W) - PET_W };
+}
+function stepWalk(){
+  const { lo, hi } = walkBounds();
+  walkX = Math.min(hi, Math.max(lo, walkX));
+  if (!G.alive || isEgg() || G.sleeping || G.sick || mode !== 'main') return;
+  if (hi <= lo) return;
+  if (walkPause > 0){ walkPause--; return; }
+  if (++walkTick % 2) return;                          /* 兩個影格才移動一格 */
+
+  walkX += walkDir;
+  if (walkX <= lo || walkX >= hi){
+    walkX = Math.min(hi, Math.max(lo, walkX));
+    walkDir = -walkDir;
+    walkPause = 4 + Math.floor(Math.random() * 10);    /* 到邊界停一下再折返 */
+  } else if (Math.random() < 0.05){
+    walkPause = 3 + Math.floor(Math.random() * 12);    /* 偶爾發個呆 */
+    if (Math.random() < 0.4) walkDir = -walkDir;
+  }
+}
+function resetWalk(){ walkX = PET_X; walkDir = 1; walkPause = 0; walkTick = 0; }
+
+function drawPet(x, y, flip){
+  blit(petSprite(), x, y, { flip: !!flip });
+}
+
+function drawMain(){
+  /* 睡覺 + 關燈 = 幾乎全黑 */
+  if (G.sleeping && !G.lightOn){
+    if (frame % 8 < 5){ textAt('Z', 25, 1); textAt('Z', 21, 6); }
+    return;
+  }
+  if (G.sleeping){
+    blit(skinSpr("LYING"), PET_X, PET_Y);
+    if (frame % 8 < 5){ textAt('Z', 28, 1); textAt('Z', 24, 6); }
+    drawPoop();
+    return;
+  }
+  const bob = (frame % 4 < 2) ? 0 : 1;                 /* 上下彈一格，看起來像在走 */
+  drawPet(G.sick ? PET_X : walkX, PET_Y + bob, walkDir < 0);
+  if (G.sick) blit(SPR.SKULL, 1, 2);
+  drawPoop();
+}
+
+function drawFoodMenu(){
+  textC('FOOD', 1);
+  blit(SPR.MEAL,  4, 8);
+  blit(SPR.SNACK, 20, 8);
+  /* 游標放在該項左邊（放上面會貼到碗），閃爍表示目前選中 */
+  if (frame % 6 < 4) blit(SPR.CURSOR, foodPick === 0 ? 0 : 16, 9);
+}
+
+/* LCD 的 3×5 字型只有英數，中文顯示不出來 —— 濾掉畫不出來的字元，
+   全部濾光就代表這個名字沒辦法上 LCD，那一頁就直接不存在。 */
+function lcdName(){
+  let s = '';
+  for (const ch of String(G.name || '').toUpperCase()) if (FONT[ch]) s += ch;
+  return s.trim().slice(0, 7);
+}
+const statPages = () => (lcdName() ? 5 : 4);
+
+function hearts(n, y){
+  for (let i = 0; i < 4; i++)
+    blit(i < n ? SPR.HEART : SPR.HEART_E, 4 + i * 7, y);
+}
+function drawStats(){
+  if (statPage >= statPages()) statPage = 0;   /* 名字被清掉時那一頁會消失 */
+  if (statPage === 0){
+    textAt('AGE', 1, 1);  textAt(String(ageDays()), 18, 1);
+    textAt('OZ',  1, 9);  textAt(String(G.weight), 18, 9);
+  } else if (statPage === 1){
+    textC('HUNGRY', 1); hearts(G.hunger, 9);
+  } else if (statPage === 2){
+    textC('HAPPY', 1);  hearts(G.happy, 9);
+  } else if (statPage === 4){
+    textC('NAME', 1);
+    textC(lcdName(), 9);
+  } else {
+    textC('DISCIPL', 1);
+    /* 有外框的進度條，沒填滿的部分留空才看得出差別 */
+    const x0 = 2, x1 = 29, yTop = 9, yBot = 13;
+    for (let x = x0; x <= x1; x++){ put(x, yTop); put(x, yBot); }
+    for (let y = yTop; y <= yBot; y++){ put(x0, y); put(x1, y); }
+    const span = x1 - x0 - 1;                          /* 內部可填格數 */
+    const segs = Math.round(G.discipline / 100 * span);
+    for (let i = 0; i < segs; i++)
+      for (let y = yTop + 1; y < yBot; y++) put(x0 + 1 + i, y);
+  }
+}
+
+function drawGame(){
+  if (mini.phase === 'ask'){
+    drawPet(PET_X, PET_Y);
+    if (frame % 6 < 4){
+      blit(SPR.ARROW, 0, 5);
+      blit(SPR.ARROW, 25, 5, { flip: true });
+    }
+  } else if (mini.phase === 'reveal'){
+    /* 角色多半左右對稱，翻轉看不出來，所以直接讓牠整隻跳到那一側 */
+    const hit = mini.guess === mini.face;
+    drawPet(mini.face === 0 ? 1 : 19, PET_Y, mini.face === 0);
+    if (mini.t > 380){
+      const mx = mini.face === 0 ? 26 : 1;             /* 結果符號放另一側的空白處 */
+      if (hit) blit(SPR.HEART, mx, 5);
+      else if (frame % 4 < 2) blit(SPR.ANGRY, mx, 5);
+    }
+  } else {
+    textC(mini.win > mini.lose ? 'WIN' : 'LOSE', 1);
+    textC(mini.win + '-' + mini.lose, 9);
+  }
+}
+
+function drawFx(){
+  const p = fx.t / fx.dur;
+  switch (fx.type){
+    case 'hatch': {
+      if (p < .55){
+        blit(frame % 4 < 2 ? SPR.EGG : SPR.EGG_CRACK, 8, 0);
+      } else if (p < .72){
+        if (frame % 2) blit(SPR.EGG_CRACK, 8, 0);
+      } else {
+        blit(skinSpr("BABY"), PET_X, PET_Y + ((frame % 4 < 2) ? 0 : 1));
+        if (frame % 4 < 2){ blit(SPR.HEART, 2, 2); blit(SPR.HEART, 25, 3); }
+      }
+      break;
+    }
+    case 'evolve': {
+      if (p < .7){ if (frame % 2) { for (let i = 0; i < W * H; i++) buf[i] = C.INK; } }
+      else {
+        drawPet(PET_X, PET_Y + ((frame % 4 < 2) ? 0 : 1));
+        if (frame % 4 < 2){ blit(SPR.HEART, 2, 2); blit(SPR.HEART, 25, 3); }
+      }
+      break;
+    }
+    case 'eat': {
+      const bite = Math.min(3, Math.floor(p * 4));       /* 0..3 口 */
+      const sp = fx.data.kind === 0 ? SPR.MEAL : SPR.SNACK;
+      if (bite < 3) blit(sp, 2, 5, { rowFrom: bite * 3 });
+      drawPet(18, PET_Y + ((frame % 4 < 2) ? 0 : 1));
+      if (p > .8 && frame % 4 < 2) blit(SPR.HEART, 13, 0);
+      break;
+    }
+    case 'refuse': {
+      drawPet(PET_X, PET_Y, frame % 2 === 0);
+      if (frame % 4 < 2) blit(SPR.ANGRY, 1, 4);
+      break;
+    }
+    case 'flush': {
+      /* 兩坨各自往最近的畫面邊緣沖出去，不要從角色身上穿過去 */
+      const shift = Math.round(p * 10);
+      drawPet(PET_X, PET_Y);
+      if (G.poop > 0) blit(SPR.POOP, 1 - shift, 10);
+      if (G.poop > 1) blit(SPR.POOP, 25 + shift, 10);
+      break;
+    }
+    case 'med': {
+      drawPet(17, PET_Y);
+      const sx = Math.round(-10 + p * 16);
+      blit(SPR.SYRINGE, sx, 6);
+      if (p > .7 && frame % 4 < 2) blit(SPR.HEART, 26, 0);
+      break;
+    }
+    case 'scold': {
+      drawPet(PET_X, PET_Y, frame % 2 === 0);
+      if (fx.data.good){
+        if (frame % 4 < 2){ textAt('!', 2, 4); textAt('!', 27, 4); }
+      } else {
+        if (frame % 4 < 2) blit(SPR.ANGRY, 1, 4);
+        blit(SPR.HEART_E, 26, 4);
+      }
+      break;
+    }
+    case 'death': {
+      if (p < .3){
+        blit(skinSpr("LYING"), PET_X, PET_Y);
+      } else if (p < .62){
+        /* 從遺體所在的位置往上飄，一路飄出畫面外（角色 12 格高） */
+        const k = (p - .3) / .32;
+        blit(skinSpr("GHOST"), PET_X, Math.round(PET_Y - k * (PET_Y + 12)));
+        blit(skinSpr("LYING"), PET_X, PET_Y);
+      } else {
+        blit(skinSpr("GRAVE"), PET_X, 4);
+      }
+      break;
+    }
+  }
+}
+
+function drawDead(){
+  const t = Math.floor(Date.now() / 1600) % 2;
+  if (t === 0){ blit(skinSpr("GRAVE"), PET_X, 4); }
+  else { textC('AGE ' + G.deathAge, 1); textC('RIP', 9); }
+}
+
+function render(){
+  clear();
+  if (!G.alive && mode !== 'fx'){ drawDead(); paint(); return; }
+  if (mode === 'fx' && fx)          drawFx();
+  else if (isEgg())                 blit(SPR.EGG, 8, (frame % 8 < 4) ? 0 : 1);
+  else if (mode === 'foodmenu')     drawFoodMenu();
+  else if (mode === 'stats')        drawStats();
+  else if (mode === 'game' && mini) drawGame();
+  else                              drawMain();
+
+  /* 呼叫時整個畫面閃一下 */
+  if (flash > 0 && G.alive && !G.sleeping){ for (let i = 0; i < W * H; i++) buf[i] = buf[i] ? 0 : C.INK; }
+  paint();
+}
+
+/* ============================================================== 圖示列 UI */
+function iconSVG(art){
+  const w = art[0].length, h = art.length;
+  let r = '';
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++)
+      if (art[y][x] === '#') r += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
+  return `<svg viewBox="0 0 ${w} ${h}" fill="currentColor" shape-rendering="crispEdges">${r}</svg>`;
+}
+const iconEls = [];
+function buildIcons(){
+  const top = document.getElementById('iconTop'), bot = document.getElementById('iconBottom');
+  ICONS.forEach((ic, i) => {
+    const el = document.createElement('div');
+    el.className = 'icon';
+    el.title = ic.label;
+    /* DOM 順序固定為「圖示 → 游標」，下排靠 column-reverse 讓游標翻到上方 */
+    el.innerHTML = iconSVG(ICON_ART[ic.k]) + '<i class="cursor"></i>';
+    if (i < SELECTABLE){
+      el.addEventListener('click', () => {
+        if (!G.alive){ hatchNew(); return; }
+        if (mode === 'fx') return;
+        if (mode === 'game') endMini();          /* 中途離開小遊戲也要結算 */
+        else if (mode !== 'main') mode = 'main';
+        sel = i; syncIcons(); act(i); syncIcons();
+      });
+    } else {
+      el.style.cursor = 'default';               /* 呼叫燈只是指示，不能選 */
+    }
+    (i < 4 ? top : bot).appendChild(el);
+    iconEls.push(el);
+  });
+}
+function syncIcons(){
+  iconEls.forEach((el, i) => {
+    el.classList.toggle('sel', i === sel);
+    const lit =
+      (i === 1 && !G.lightOn) ||                        /* 燈關著 → 電燈圖示亮 */
+      (i === 3 && G.sick > 0) ||                        /* 生病 → 打針圖示亮 */
+      (i === 4 && G.poop > 0);                          /* 有便便 → 馬桶圖示亮 */
+    el.classList.toggle('lit', !!lit);
+    el.classList.toggle('blink', i === 7 && G.calling && G.alive);
+  });
+}
+
+/* ================================================================== 主迴圈 */
+let lastT = performance.now();
+let animAcc = 0, minAcc = 0, callAcc = 0, saveAcc = 0;
+
+function loop(now){
+  const dt = Math.min(500, now - lastT); lastT = now;
+
+  /* 遊戲時間推進 */
+  if (G.alive){
+    const gm = (dt / 60000) * speed;
+    G.gtMin += gm;
+    minAcc  += gm;
+    while (minAcc >= 1){ minAcc -= 1; tickMinute(false); }
+  }
+
+  /* 動畫影格 ~8fps */
+  animAcc += dt;
+  while (animAcc >= 125){ animAcc -= 125; frame++; stepWalk(); }
+
+  /* 呼叫提示音 + 閃爍 */
+  flash = 0;
+  if (G.alive && G.calling && !G.sleeping && mode === 'main'){
+    callAcc += dt;
+    if (callAcc > 4000){ callAcc = 0; SFX.call(); }
+    if (frame % 8 < 1) flash = 1;
+  } else callAcc = 0;
+
+  if (fx){
+    fx.t += dt;
+    if (fx.t >= fx.dur){
+      const t = fx.type;
+      endFx();
+      if (t === 'flush'){ G.poop = 0; }
+      if (t === 'med'){
+        if (Math.random() < 0.6){ G.sick = 0; G.sickMin = 0; G.calling = false; }
+      }
+      sel = -1; save();
+    }
+  }
+  if (mode === 'game') stepMini(dt);
+
+  saveAcc += dt;
+  if (saveAcc > 5000){ saveAcc = 0; save(); }
+
+  syncIcons();
+  render();
+  requestAnimationFrame(loop);
+}
+
+/* =================================================================== 輸入 */
+function bindBtn(id, fn){
+  const el = document.getElementById(id);
+  const go = e => { e.preventDefault(); ac(); fn(); };
+  el.addEventListener('pointerdown', go);
+}
+bindBtn('btnA', pressA);
+bindBtn('btnB', pressB);
+bindBtn('btnC', pressC);
+
+/* 長按 C 靜音 */
+let cHold = null;
+document.getElementById('btnC').addEventListener('pointerdown', () => {
+  cHold = setTimeout(() => { soundOn = !soundOn; updateSoundBtn(); save(); }, 3000);
+});
+['pointerup','pointerleave','pointercancel'].forEach(ev =>
+  document.getElementById('btnC').addEventListener(ev, () => { clearTimeout(cHold); }));
+
+const KEYMAP = { a:pressA, s:pressB, d:pressC, arrowleft:pressA, arrowdown:pressB, arrowright:pressC,
+                 '1':pressA, '2':pressB, '3':pressC };
+addEventListener('keydown', e => {
+  const f = KEYMAP[e.key.toLowerCase()];
+  if (!f) return;
+  e.preventDefault(); ac(); f();
+  const id = (f === pressA) ? 'btnA' : (f === pressB) ? 'btnB' : 'btnC';
+  const el = document.getElementById(id);
+  el.classList.add('press'); setTimeout(() => el.classList.remove('press'), 90);
+});
+
+/* ================================================================ 側欄控制 */
+const SHELLS = [
+  ['#f2c94c','#e08b2e','#b5641c'],
+  ['#a8e0f2','#4aa8d8','#2a6ea0'],
+  ['#f7b8d8','#e56aa8','#a82f6a'],
+  ['#cfe8b0','#7fb84f','#3f7a2a'],
+  ['#e6e6e6','#a8a8a8','#6a6a6a'],
+];
+let shellIdx = 0;
+function applyShell(){
+  const s = SHELLS[shellIdx] || SHELLS[0];
+  const r = document.documentElement.style;
+  r.setProperty('--shell-a', s[0]); r.setProperty('--shell-b', s[1]); r.setProperty('--shell-c', s[2]);
+  [...document.querySelectorAll('.sw')].forEach((el, i) => el.classList.toggle('on', i === shellIdx));
+}
+function buildSwatches(){
+  const box = document.getElementById('swatches');
+  SHELLS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'sw'; b.type = 'button'; b.title = '機身配色 ' + (i + 1);
+    b.style.background = `linear-gradient(158deg,${s[0]},${s[1]} 55%,${s[2]})`;
+    b.addEventListener('click', () => { shellIdx = i; applyShell(); save(); });
+    box.appendChild(b);
+  });
+}
+function updateSpeedSeg(){
+  [...document.querySelectorAll('#speedSeg button')].forEach(b =>
+    b.classList.toggle('on', Number(b.dataset.speed) === speed));
+}
+function updateNameplate(){
+  const el = document.getElementById('nameplate');
+  const n = String(G.name || '').trim();
+  el.textContent = n;
+  el.hidden = !n;
+}
+document.getElementById('nameInput').addEventListener('input', e => {
+  G.name = e.target.value;
+  updateNameplate(); save();
+});
+function updateSkinSeg(){
+  [...document.querySelectorAll('#skinSeg button')].forEach(b =>
+    b.classList.toggle('on', b.dataset.skin === skin));
+}
+document.getElementById('skinSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  skin = b.dataset.skin; updateSkinSeg(); save();
+});
+document.getElementById('speedSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  speed = Number(b.dataset.speed); updateSpeedSeg(); save();
+});
+function updateSoundBtn(){
+  document.getElementById('soundBtn').textContent = '音效：' + (soundOn ? '開' : '關');
+}
+document.getElementById('soundBtn').addEventListener('click', () => {
+  soundOn = !soundOn; updateSoundBtn(); if (soundOn){ ac(); SFX.ok(); } save();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (confirm('要放棄現在這隻，重新孵一顆新的蛋嗎？')) hatchNew();
+});
+
+/* ==================================================================== 啟動 */
+buildIcons();
+buildSwatches();
+load();
+applyShell();
+updateSpeedSeg();
+updateSkinSeg();
+document.getElementById('nameInput').value = G.name || '';
+updateNameplate();
+updateSoundBtn();
+readColors();
+fit();
+addEventListener('resize', fit);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) save();
+  else {
+    /* rAF 在背景會停掉，回來時用真實經過時間補算，跟重新整理的邏輯一致 */
+    catchUpSince(G.lastReal || Date.now());
+    lastT = performance.now();
+    save();
+  }
+});
+addEventListener('pagehide', save);
+requestAnimationFrame(t => { lastT = t; loop(t); });
+</script>
+</body>
+</html>
