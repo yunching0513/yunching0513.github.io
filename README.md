@@ -27,4 +27,4 @@ python3 -m http.server 8787
 
 ## 著作權
 
-程式 MIT／內容 CC BY-NC 4.0，詳見 [COPYRIGHT.md](COPYRIGHT.md)。
+程式 MIT／內容 CC BY-NC 4.0，詳見 [COPYRIGHT.md](COPYRIGHT.md)；第三方素材見 [ATTRIBUTION.md](ATTRIBUTION.md)。

@@ -1,25 +1,26 @@
-# 著作權 Copyright
+# 著作權與授權 Copyright & Licence
 
-**創作者 Creator**：吳昀慶 Yun-Ching Wu
-**版權年份 Years**：2026
-**網址**：https://yunching0513.github.io/
+**專案 Project**　個人網站
+**創作者 Author**　吳昀慶 Yun-Ching Wu
+**著作權 Copyright**　© 2026 吳昀慶 Yun-Ching Wu
+
+本專案之原始碼、以及文字／圖像／地圖／資料視覺化成果，除另有標註者外，均由 吳昀慶 Yun-Ching Wu 創作，著作權歸其所有。
 
 ## 授權 Licence
 
-| 內容 | 授權 |
-| --- | --- |
-| 原始碼（HTML／CSS／JavaScript） | MIT License — 見 [`LICENSE`](LICENSE) |
-| 文字、照片、資料視覺化成果 | CC BY-NC 4.0 — 見 [`LICENSE-CONTENT`](LICENSE-CONTENT) |
+- 原始碼：MIT License（見 `LICENSE`）
+- 文字、圖像、地圖、資料成果：CC BY-NC 4.0（見 `LICENSE-CONTENT`）
 
 ## 引用方式 How to cite
 
-> 吳昀慶 Yun-Ching Wu（2026）。《Yun-Ching Wu — Urban Researcher & Advocate》。https://yunching0513.github.io/
+> 吳昀慶（Yun-Ching Wu）。個人網站。2026。
 
-## 第三方素材 Third-party materials
+## 第三方素材 Third-party material
 
-- **視覺語言 Visual language**：本站的色彩、字體與版面規則改寫自作者自行整理的
-  《こども本の森 中之島 UI 設計準則 v1.0》，該準則取材自大阪「こども本の森 中之島」
-  官方網站（kodomohonnomori.osaka）。原網站的品牌與視覺設計著作權屬該機構所有，
-  本站僅為風格致敬，未使用其標誌、圖像或文案。
-- **字體 Fonts**：jf open 粉圓 Huninn（SIL OFL 1.1）、Varela Round（SIL OFL 1.1）。
-- **舊版首頁 Previous homepage**：保留於 [`2026-07/`](2026-07/)，著作權同上。
+本專案可能使用第三方資料、字體、底圖或程式庫，其著作權歸各自權利人所有，
+並依其原授權條款使用。相關標示請見各檔案標頭或 `ATTRIBUTION.md`（若有）。
+政府開放資料、OpenStreetMap、國土測繪圖資等來源之權利不因本聲明而改變。
+
+## 聯絡 Contact
+
+如需商業授權或超出上述範圍之使用，請與創作者聯絡。
