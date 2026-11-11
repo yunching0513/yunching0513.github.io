@@ -30,9 +30,9 @@
   --forest-ink:#2E5339;     /* green text, small labels (AA on paper) */
   --forest-deep:#4C8C58;
   --forest-soft:#7C9A6E;
-  --pink:#E89AB0;  --pink-soft:#FBE3EA;
-  --yellow:#E6CF3E; --yellow-soft:#FBF3CC;
-  --sky:#8FB9C9;
+  --pink:#E89AB0;  --pink-soft:#FBE3EA;  --pink-ink:#A0455C;
+  --yellow:#E6CF3E; --yellow-soft:#FBF3CC; --yellow-ink:#7A6610;
+  --sky:#8FB9C9;   --sky-ink:#3F6C7E;
   --wrap:1180px;
   --pad:40px;
   --ease:cubic-bezier(.4,0,.2,1);
@@ -194,8 +194,8 @@ section{padding:104px 0; border-top:1px solid var(--line);}
 .tags{display:flex; flex-wrap:wrap; gap:8px;}
 .tag{font-size:12.5px; padding:6px 14px; border-radius:9999px; background:var(--panel); color:var(--ink);}
 .tag.green{background:var(--forest-ink); color:#fff; font-weight:700;}
-.tag.pink{background:var(--pink-soft); color:#B5506C; font-weight:700;}
-.tag.yellow{background:var(--yellow-soft); color:#8A7414; font-weight:700;}
+.tag.pink{background:var(--pink-soft); color:var(--pink-ink); font-weight:700;}
+.tag.yellow{background:var(--yellow-soft); color:var(--yellow-ink); font-weight:700;}
 .links{display:flex; flex-wrap:wrap; gap:16px; padding-top:4px;}
 .links a{font-weight:700; font-size:14px; color:var(--forest-ink); text-decoration:none; display:inline-flex; align-items:center; gap:7px;
   padding:8px 0; margin:-8px 0;}
@@ -416,25 +416,25 @@ html[lang="en"] .cards4 .en{letter-spacing:0;}
 
     <div class="cards4">
       <div>
-        <div class="n" style="color:var(--forest-ink); opacity:.55;">01</div>
+        <div class="n" style="color:var(--forest-ink);">01</div>
         <h3 data-zh="移動轉型">Mobility transition</h3>
         <p data-zh="從以車為本到以人為本：政策工具、街道實驗，以及能真正落地的制度設計。">From car-centred to people-centred streets: policy instruments, street experiments, and institutional design that actually lands.</p>
         <p class="en" data-zh="MOBILITY TRANSITION">移動轉型</p>
       </div>
       <div>
-        <div class="n" style="color:var(--pink); opacity:.9;">02</div>
+        <div class="n" style="color:var(--pink-ink);">02</div>
         <h3 data-zh="道路安全">Road safety</h3>
         <p data-zh="以零死亡願景為框架，用資料與案例分析，指認風險路口與制度上的缺口。">Using a Vision Zero frame, with data and case analysis, to identify risky junctions and the institutional gaps behind them.</p>
         <p class="en" data-zh="VISION ZERO">道路安全</p>
       </div>
       <div>
-        <div class="n" style="color:var(--yellow); opacity:1;">03</div>
+        <div class="n" style="color:var(--yellow-ink);">03</div>
         <h3 data-zh="健康與十五分鐘城市">Healthy &amp; proximity cities</h3>
         <p data-zh="十分鐘城市的規劃方法：以烏特勒支空間策略 2040（RSU2040）為例，檢視可及性如何被寫進計畫。">Planning methods for the 10-minute city — reading the Utrecht Spatial Strategy 2040 to see how accessibility gets written into a plan.</p>
         <p class="en" data-zh="HEALTHY CITY">健康與十五分鐘城市</p>
       </div>
       <div>
-        <div class="n" style="color:var(--sky); opacity:.95;">04</div>
+        <div class="n" style="color:var(--sky-ink);">04</div>
         <h3 data-zh="公民與 AI">Citizens &amp; AI</h3>
         <p data-zh="開放資料與生成式 AI 能否成為市民的設計語言？我的碩士論文即為一個公民 AI 街道設計助理。">Can open data and generative AI become a design language for citizens? My master's thesis built a citizen-AI street design assistant.</p>
         <p class="en" data-zh="CITIZEN AI">公民與 AI</p>
